@@ -1,12 +1,14 @@
+-- Initiate Globals
 simpleAuras = simpleAuras or {}
 sA = {}
-sA.frames = sA.frames or {}
-sA.dualframes = sA.dualframes or {}
+sA.frames = {}
+sA.dualframes = {}
 
-simpleAuras.refresh = simpleAuras.refresh or 5
+-- Get AuraData and RefreshRate from SavedVariables
 simpleAuras.auras = simpleAuras.auras or {}
+simpleAuras.refresh = simpleAuras.refresh or 5
 
--- Utility: Skin any frame with flat background and 1px black border
+-- Function to skin frames with flat background and 1px black border
 function sA:SkinFrame(frame, bg, border)
 	frame:SetBackdrop({
 		bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -77,12 +79,14 @@ end
 function sA:GetAuraInfo(unit, index, auraType)
 
 	local name, texture, duration, stacks, buffindex
-	
+
+	-- Create Scanner-Tooltip if not previously created
 	if not sAScanner then
 		sAScanner = CreateFrame("GameTooltip", "sAScanner", UIParent, "GameTooltipTemplate")
 		sAScanner:SetOwner(UIParent, "ANCHOR_NONE")
 	end
-	
+
+	-- Wipe Scanner-Tooltip Data
 	sAScanner:ClearLines()
 
 	-- PLayerBuffs start with ID 0 instead of 1
@@ -114,7 +118,7 @@ function sA:GetAuraInfo(unit, index, auraType)
 
 	name = sAScannerTextLeft1:GetText()
 	
-	return name, icon, math.floor(duration+1-(1/simpleAuras.refresh)), stacks
+	return name, icon, math.floor(duration+1-(1/simpleAuras.refresh)), stacks -- Round Duration for proper display, needs review/testing
 	
 end
 
@@ -145,8 +149,11 @@ function sA:UpdateAuras()
 					aura.texture = icon
 					simpleAuras.auras[id].texture = aura.texture
 				end
+				
 			end
+			
 			i = i + 1
+			
 		end
 
 		-- Switch 1 <-> if invert is active
@@ -210,7 +217,11 @@ end
 -- Events Setup
 sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 sAEvent:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+-- Init on UI loaded
 sAEvent:SetScript("OnEvent", function() sA:Init() end)
+
+-- Timebased Update of Aura Displays every (1-refresh)secs
 sAEvent:SetScript("OnUpdate", function()
 	local time = GetTime()
 	local refreshRate = simpleAuras.refresh
@@ -219,7 +230,3 @@ sAEvent:SetScript("OnUpdate", function()
 	sAEvent.lastUpdate = time
 	sA:UpdateAuras()
 end)
-
-sAScanner = CreateFrame("GameTooltip", "sAScanner", UIParent, "GameTooltipTemplate")
-
-sAScanner:SetOwner(UIParent, "ANCHOR_NONE")
