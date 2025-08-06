@@ -19,24 +19,6 @@ function sA:SkinFrame(frame, bg, border)
 	frame:SetBackdropBorderColor(unpack(border or {0, 0, 0, 1}))
 end
 
--- Prepare Aura Frames
-function sA:Init()
-
-	sA.frames = {}
-	
-	for id, aura in ipairs(simpleAuras.auras) do
-		local frame = CreateFrame("Frame", "sAAura"..id, UIParent)
-		frame:SetFrameStrata("BACKGROUND")
-		frame.texture = frame:CreateTexture(nil, "BACKGROUND")
-		frame.texture:SetAllPoints(frame)
-		frame:Hide()
-		sA.frames[id] = frame
-	end
-
-	sA:UpdateAuras()
-  
-end
-
 -- Get AuraData
 function sA:GetAuraInfo(unit, index, auraType)
 
@@ -88,9 +70,13 @@ end
 function sA:UpdateAuras()
 
 	-- Hide Dual TestAura if GUI isn't shown
-	if not gui.editor or not gui.editor:IsShown()
-		TestAura:Hide()
-		TestAuraDual:Hide()
+	if not gui.editor or not gui.editor:IsVisible() then
+		sA.TestAura:Hide()
+		sA.TestAuraDual:Hide()
+		if gui.editor then
+			gui.editor:Hide()
+		end
+		gui.editor = nil
 	end
 
 	-- Cycle through Auras
@@ -99,29 +85,30 @@ function sA:UpdateAuras()
 		local i = 1
 		local show = 0
 
-		-- Skip if <unnamed>
-		if aura.name == "" then return end
-		while true do
-		
-			local name, icon, duration, stacks = sA:GetAuraInfo(aura.unit, i, aura.type)
-			if not name then break end
-			if name == aura.name then
-				show = 1
-				-- Update aura icon if autodetect is active
-				if aura.autodetect == 1 then
-					aura.texture = icon
-					simpleAuras.auras[id].texture = aura.texture
+		-- Skip this part if <unnamed>
+		if aura.name ~= "" then
+			while true do
+			
+				local name, icon, duration, stacks = sA:GetAuraInfo(aura.unit, i, aura.type)
+				if not name then break end
+				if name == aura.name then
+					show = 1
+					-- Update aura icon if autodetect is active
+					if aura.autodetect == 1 then
+						aura.texture = icon
+						simpleAuras.auras[id].texture = aura.texture
+					end
+					
 				end
 				
+				i = i + 1
+				
 			end
-			
-			i = i + 1
-			
-		end
 
-		-- Switch 1 <-> if invert is active
-		if aura.invert == 1 then
-			show = 1 - show
+			-- Switch 1 <-> if invert is active
+			if aura.invert == 1 then
+				show = 1 - show
+			end
 		end
 
 		-- Get Frames
@@ -129,7 +116,17 @@ function sA:UpdateAuras()
 		local dualframe = sA.dualframes[id]
 		
 		-- Show if Conditions met or main GUI is shown - but not if AuraEditor is open
-		if (show == 1 or gui:IsShown()) and (not gui.editor or not gui.editor:IsShown()) then
+		if (show == 1 or (gui and gui:IsVisible())) and (not gui.editor or not gui.editor:IsVisible()) then
+
+			-- Create AuraFrame if not already existing
+			if not sA.frames[id] then
+				frame = CreateFrame("Frame", "sAAura"..id, UIParent)
+				frame:SetFrameStrata("BACKGROUND")
+				frame.texture = frame:CreateTexture(nil, "BACKGROUND")
+				frame.texture:SetAllPoints(frame)
+				frame:Hide()
+				sA.frames[id] = frame
+			end
 
 			-- Update Aura Display and Show
 			frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
@@ -167,7 +164,9 @@ function sA:UpdateAuras()
 		else
 
 			-- Hide Frames if neither Conditions are met nor main GUI is open - or when Editor is opened
-			frame:Hide()
+			if frame then
+				frame:Hide()
+			end
 			if aura.dual and dualframe then
 				dualframe:Hide()
 			end
@@ -179,10 +178,6 @@ end
 
 -- Events Setup
 sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
-sAEvent:RegisterEvent("PLAYER_ENTERING_WORLD")
-
--- Init on UI loaded
-sAEvent:SetScript("OnEvent", function() sA:Init() end)
 
 -- Timebased Update of Aura Displays every (1-refresh)secs
 sAEvent:SetScript("OnUpdate", function()
