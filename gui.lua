@@ -8,13 +8,15 @@ local function RefreshAuraList()
 	gui.list = {}
 
 	-- Cycle through all Auras
-	for id, aura in ipairs(simpleAuras.auras) do
+	for i, aura in ipairs(simpleAuras.auras) do
+
+		local id = i
 
 		-- Create List Item
 		local ListItem = CreateFrame("Button", nil, gui)
 		ListItem:SetWidth(260)
 		ListItem:SetHeight(20)
-		ListItem:SetPoint("TOPLEFT", 20, -30 - (i - 1) * 22)
+		ListItem:SetPoint("TOPLEFT", 20, -30 - (id - 1) * 22)
 		sA:SkinFrame(ListItem, {0.2, 0.2, 0.2, 1})
 		ListItem:SetScript("OnEnter", function() ListItem:SetBackdropColor(0.3, 0.3, 0.3, 1) end)
 		ListItem:SetScript("OnLeave", function() ListItem:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
@@ -37,9 +39,51 @@ local function RefreshAuraList()
 		end)
 
 		-- Add to AuraList
-		gui.list[i] = ListItem
+		gui.list[id] = ListItem
 		
 	end
+	
+end
+
+
+
+-- EDITOR FUNCTIONS
+
+-- Save Aura
+local function SaveAura(id)
+	
+	-- Save Values
+	simpleAuras.auras[id].name = gui.editor.name:GetText()
+	simpleAuras.auras[id].unit = gui.editor.unitButton.text:GetText()
+	simpleAuras.auras[id].type = gui.editor.typeButton.text:GetText()
+	simpleAuras.auras[id].color = gui.editor.currentColor
+	simpleAuras.auras[id].autodetect = gui.editor.autoDetect.value
+	simpleAuras.auras[id].texture = gui.editor.texturePath:GetText()
+	simpleAuras.auras[id].size = gui.editor.size:GetText()
+	simpleAuras.auras[id].xpos = gui.editor.x:GetText()
+	simpleAuras.auras[id].ypos = gui.editor.y:GetText()
+	simpleAuras.auras[id].invert = gui.editor.invert.value
+	simpleAuras.auras[id].dual = gui.editor.dual.value
+
+	-- Clear Focus
+	gui.editor.name:ClearFocus()
+	gui.editor.texturePath:ClearFocus()
+	gui.editor.size:ClearFocus()
+	gui.editor.x:ClearFocus()
+	gui.editor.y:ClearFocus()
+
+	-- Hide TestAuras
+	sA.TestAura:Hide()
+	sA.TestAuraDual:Hide()
+
+	-- Hide and wipe Editor Window
+	gui.editor:Hide()
+	gui.editor = nil
+
+	-- Refresh AuraList and show Editor Window for Aura
+	RefreshAuraList()
+	sA:EditAura(id)
+	return
 	
 end
 
@@ -52,7 +96,7 @@ local function independentCopy(original)
 	local copy = {}
 	for k, v in pairs(original) do
 		if type(v) == "table" then
-			copy[k] = DeepCopy(v)
+			copy[k] = independentCopy(v)
 		else
 			copy[k] = v
 		end
@@ -74,17 +118,17 @@ local function AddAura(id)
 	if id then
 		simpleAuras.auras[newid] = independentCopy(simpleAuras.auras[id])
 	end
-
+	
 	-- Hide and wipe Editor Frame, also hide Testauras
-	if gui.editor:IsShown() then
+	if gui.editor and gui.editor:IsShown() then
 		gui.editor:Hide()
 		gui.editor = nil
 		sA.TestAura:Hide()
 		sA.TestAuraDual:Hide()
 	end
-
+	
 	-- Rerun Init to generate new Frames
-	sA:Init()
+	sA:UpdateAuras()
 
 	-- Refresh AuraList and show new Aura
 	RefreshAuraList()
@@ -171,48 +215,6 @@ table.insert(UISpecialFrames, "sATestDual")
 
 -- Build AuraList
 RefreshAuraList()
-
-
-
--- EDITOR FUNCTIONS
-
--- Save Aura
-local function SaveAura(id)
-	
-	-- Save Values
-	simpleAuras.auras[id].name = gui.editor.name:GetText()
-	simpleAuras.auras[id].unit = gui.editor.unitButton.text:GetText()
-	simpleAuras.auras[id].type = gui.editor.typeButton.text:GetText()
-	simpleAuras.auras[id].color = gui.editor.currentColor
-	simpleAuras.auras[id].autodetect = gui.editor.autoDetect.value
-	simpleAuras.auras[id].texture = gui.editor.texturePath:GetText()
-	simpleAuras.auras[id].size = gui.editor.size:GetText()
-	simpleAuras.auras[id].xpos = gui.editor.x:GetText()
-	simpleAuras.auras[id].ypos = gui.editor.y:GetText()
-	simpleAuras.auras[id].invert = gui.editor.invert.value
-	simpleAuras.auras[id].dual = gui.editor.dual.value
-
-	-- Clear Focus
-	gui.editor.name:ClearFocus()
-	gui.editor.texturePath:ClearFocus()
-	gui.editor.size:ClearFocus()
-	gui.editor.x:ClearFocus()
-	gui.editor.y:ClearFocus()
-
-	-- Hide TestAuras
-	sA.TestAura:Hide()
-	sA.TestAuraDual:Hide()
-
-	-- Hide and wipe Editor Window
-	gui.editor:Hide()
-	gui.editor = nil
-
-	-- Refresh AuraList and show Editor Window for Aura
-	RefreshAuraList()
-	sA:EditAura(id)
-	return
-	
-end
 
 
 
@@ -316,7 +318,10 @@ function sA:EditAura(id)
 			ed.currentColor = {unpack(prev)}
 			ed.colorSwatch:SetBackdropColor(unpack(ed.currentColor))
 			simpleAuras.auras[id].color = ed.currentColor
-			showframe.texture:SetVertexColor(unpack(ed.currentColor))
+			sA.TestAura.texture:SetVertexColor(unpack(ed.currentColor))
+			if aura.dual then
+				sA.TestAuraDual.texture:SetVertexColor(unpack(ed.currentColor))
+			end
 			gui.list[id].text:SetTextColor(unpack(ed.currentColor))
 			end
 			ColorPickerFrame.func = function()
@@ -324,7 +329,10 @@ function sA:EditAura(id)
 			ed.currentColor = {nr, ng, nb}
 			simpleAuras.auras[id].color = ed.currentColor
 			ed.colorSwatch:SetBackdropColor(unpack(ed.currentColor))
-			showframe.texture:SetVertexColor(unpack(ed.currentColor))
+			sA.TestAura.texture:SetVertexColor(unpack(ed.currentColor))
+			if aura.dual then
+				sA.TestAuraDual.texture:SetVertexColor(unpack(ed.currentColor))
+			end
 			gui.list[id].text:SetTextColor(unpack(ed.currentColor))
 			end
 			ColorPickerFrame:Hide()
@@ -531,7 +539,7 @@ function sA:EditAura(id)
 			makeChoice("Target", 2)
 			end
 			local menu = ed.unitButton.menu
-			if menu:IsShown() then
+			if menu:IsVisible() then
 			menu:Hide()
 			else
 			menu:Show()
@@ -583,7 +591,7 @@ function sA:EditAura(id)
 			end
 			-- Toggle
 			local menu = ed.typeButton.menu
-			if menu:IsShown() then
+			if menu:IsVisible() then
 				menu:Hide()
 			else
 				menu:Show()
@@ -773,15 +781,14 @@ function sA:EditAura(id)
 		yes.text:SetText("Yes")
 		yes:SetFontString(yes.text)
 		yes:SetScript("OnClick", function()
-			sA.frames[id]:Hide()
-			table.remove(simpleAuras.auras, id)
-			table.remove(sA.frames, id)
-			for newId, frame in ipairs(sA.frames) do
-				frame:SetFrameLevel(128 - newId)
+			if sA.frames[id] then
+				sA.frames[id]:Hide()
+				table.remove(simpleAuras.auras, id)
+				table.remove(sA.frames, table.getn(sA.frames))
 			end
 			if aura.dual == 1 and sA.dualframes[id] then
 				sA.dualframes[id]:Hide()
-				table.remove(sA.dualframes, id)
+				table.remove(sA.dualframes, table.getn(sA.dualframes))
 			end
 			ed.confirm:Hide()
 			ed:Hide()
@@ -840,11 +847,11 @@ SlashCmdList["sA"] = function(msg)
 	-- hide / show or no command
 	if cmd == "" or cmd == "show" or cmd == "hide" then
 		if cmd == "show" then
-			if not gui:IsShown() then gui:Show() end
+			if not gui:IsVisible() then gui:Show() end
 		elseif cmd == "hide" then
-			if gui:IsShown() then gui:Hide() sA.TestAura:Hide() sA.TestAuraDual:Hide() end
+			if gui:IsVisible() then gui:Hide() sA.TestAura:Hide() sA.TestAuraDual:Hide() end
 		else 
-			if gui:IsShown() then gui:Hide() sA.TestAura:Hide() sA.TestAuraDual:Hide() else gui:Show() end
+			if gui:IsVisible() then gui:Hide() sA.TestAura:Hide() sA.TestAuraDual:Hide() else gui:Show() end
 		end
 		RefreshAuraList()
 		return
