@@ -34,6 +34,7 @@ gui:SetScript("OnDragStart", function() gui:StartMoving() end)
 gui:SetScript("OnDragStop", function() gui:StopMovingOrSizing() end)
 sA:SkinFrame(gui)
 gui:Hide()
+table.insert(UISpecialFrames, "sAGUI") -- Add GUI to SpecialFrames (ESC to close)
 
 -- Create Testframe (used in editor)
 local TestAura = CreateFrame("Frame", "sATest", UIParent)
@@ -230,3 +231,4 @@ sAEvent:SetScript("OnUpdate", function()
 	sAEvent.lastUpdate = time
 	sA:UpdateAuras()
 end)
+
