@@ -19,45 +19,6 @@ function sA:SkinFrame(frame, bg, border)
 	frame:SetBackdropBorderColor(unpack(border or {0, 0, 0, 1}))
 end
 
--- Create main GUI frame
-gui = CreateFrame("Frame", "sAGUI", UIParent)
-local title = gui:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-title:SetPoint("TOP", gui, "TOP", 0, -5)
-title:SetText("simpleAuras")
-gui:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-gui:SetWidth(300)
-gui:SetHeight(400)
-gui:SetMovable(true)
-gui:EnableMouse(true)
-gui:RegisterForDrag("LeftButton")
-gui:SetScript("OnDragStart", function() gui:StartMoving() end)
-gui:SetScript("OnDragStop", function() gui:StopMovingOrSizing() end)
-sA:SkinFrame(gui)
-gui:Hide()
-table.insert(UISpecialFrames, "sAGUI") -- Add GUI to SpecialFrames (ESC to close)
-
--- Create Testframe (used in editor)
-local TestAura = CreateFrame("Frame", "sATest", UIParent)
-TestAura:SetFrameStrata("BACKGROUND")
-TestAura:SetFrameLevel(128)
-TestAura.texture = TestAura:CreateTexture(nil, "BACKGROUND")
-TestAura.texture:SetAllPoints(TestAura)
-TestAura:Hide()
-sA.TestAura = TestAura
-
--- Create Testframe for dual display (used in editor)
-local TestAuraDual = CreateFrame("Frame", "sATestDual", UIParent)
-TestAuraDual:SetFrameStrata("BACKGROUND")
-TestAuraDual:SetFrameLevel(128)
-TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "BACKGROUND")
-TestAuraDual.texture:SetAllPoints(TestAuraDual)
-TestAuraDual:Hide()
-sA.TestAuraDual = TestAuraDual
-
--- Add TestFrames to SpecialFrames
-table.insert(UISpecialFrames, "sATest")
-table.insert(UISpecialFrames, "sATestDual")
-
 -- Prepare Aura Frames
 function sA:Init()
 
@@ -127,7 +88,7 @@ end
 function sA:UpdateAuras()
 
 	-- Hide Dual TestAura if GUI isn't shown
-	if not gui:IsShown() then
+	if not gui.editor or not gui.editor:IsShown()
 		TestAura:Hide()
 		TestAuraDual:Hide()
 	end
@@ -232,5 +193,6 @@ sAEvent:SetScript("OnUpdate", function()
 	sAEvent.lastUpdate = time
 	sA:UpdateAuras()
 end)
+
 
 
