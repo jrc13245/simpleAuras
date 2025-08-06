@@ -1,3 +1,5 @@
+-- MAIN FUNCTIONS
+
 -- Aura List Refresh
 local function RefreshAuraList()
 
@@ -23,12 +25,14 @@ local function RefreshAuraList()
 		ListItem.text:SetText("["..id.."] "..(aura.name ~= "" and aura.name or "<unnamed>"))
 		ListItem.text:SetTextColor(unpack(aura.color or {1, 1, 1}))
 		ListItem:SetScript("OnClick", function()
+			-- Close Testauras and Editor Window if already open
 			if gui.editor then
 				sA.TestAura:Hide()
 				sA.TestAuraDual:Hide()
 				gui.editor:Hide()
 				gui.editor = nil
 			end
+			-- Open Edit Window for Aura
 			sA:EditAura(id)
 		end)
 
@@ -38,6 +42,10 @@ local function RefreshAuraList()
 	end
 	
 end
+
+
+
+-- GENERAL FUNCTIONS
 
 -- Copy independently
 local function independentCopy(original)
@@ -52,26 +60,33 @@ local function independentCopy(original)
 	return copy
 end
 
--- AddAura
+-- AddAura and Copy
 local function AddAura(id)
 
+	-- Add new Aura
 	table.insert(simpleAuras.auras, {})
+	-- Get the new ID and set Default Values for Name and Texture
 	local newid = table.getn(simpleAuras.auras)
 	simpleAuras.auras[newid].name = ""
 	simpleAuras.auras[newid].texture = "Interface\\Icons\\INV_Misc_QuestionMark"
+
+	-- Insert existing Aura into new Aura if an ID is provided
 	if id then
 		simpleAuras.auras[newid] = independentCopy(simpleAuras.auras[id])
 	end
+
+	-- Hide and wipe Editor Frame, also hide Testauras
 	if gui.editor:IsShown() then
 		gui.editor:Hide()
 		gui.editor = nil
 		sA.TestAura:Hide()
 		sA.TestAuraDual:Hide()
 	end
-	
-	table.insert(sA.frames, {})
+
+	-- Rerun Init to generate new Frames
 	sA:Init()
-	
+
+	-- Refresh AuraList and show new Aura
 	RefreshAuraList()
 	sA:EditAura(newid)
 	
@@ -79,8 +94,92 @@ local function AddAura(id)
 	
 end
 
--- SaveAura
+
+
+-- MAIN WINDOW
+
+-- Create main GUI frame
+gui = CreateFrame("Frame", "sAGUI", UIParent)
+local title = gui:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+title:SetPoint("TOP", gui, "TOP", 0, -5)
+title:SetText("simpleAuras")
+gui:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+gui:SetWidth(300)
+gui:SetHeight(400)
+gui:SetMovable(true)
+gui:EnableMouse(true)
+gui:RegisterForDrag("LeftButton")
+gui:SetScript("OnDragStart", function() gui:StartMoving() end)
+gui:SetScript("OnDragStop", function() gui:StopMovingOrSizing() end)
+sA:SkinFrame(gui)
+gui:Hide()
+table.insert(UISpecialFrames, "sAGUI") -- Add GUI to SpecialFrames (ESC to close)
+
+-- Add Button
+local add = CreateFrame("Button", nil, gui)
+add:SetPoint("TOPLEFT", 2, -2)
+add:SetWidth(20)
+add:SetHeight(20)
+sA:SkinFrame(add, {0.2, 0.2, 0.2, 1})
+add.text = add:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+add.text:SetPoint("CENTER", add, "CENTER", 0, 0)
+add.text:SetText("+")
+add:SetFontString(add.text)
+add:SetScript("OnClick", function() AddAura() end)
+add:SetScript("OnEnter", function() add:SetBackdropColor(0.1, 0.4, 0.1, 1) end)
+add:SetScript("OnLeave", function() add:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+
+-- Close Button
+local close = CreateFrame("Button", nil, gui)
+close:SetWidth(20)
+close:SetHeight(20)
+close:SetPoint("TOPRIGHT", gui, "TOPRIGHT", -2, -2)
+sA:SkinFrame(close, {0.2, 0.2, 0.2, 1})
+close.text = close:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+close.text:SetPoint("CENTER", close, "CENTER", 0.5, 1)
+close.text:SetText("x")
+close:SetFontString(close.text)
+close:SetScript("OnClick", function()
+	gui:Hide()
+	sA.TestAura:Hide()
+	sA.TestAuraDual:Hide()
+end)
+close:SetScript("OnEnter", function() close:SetBackdropColor(0.4, 0.1, 0.1, 1) end)
+close:SetScript("OnLeave", function() close:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+
+-- Create Testframe (used in editor)
+local TestAura = CreateFrame("Frame", "sATest", UIParent)
+TestAura:SetFrameStrata("BACKGROUND")
+TestAura:SetFrameLevel(128)
+TestAura.texture = TestAura:CreateTexture(nil, "BACKGROUND")
+TestAura.texture:SetAllPoints(TestAura)
+TestAura:Hide()
+sA.TestAura = TestAura
+
+-- Create Testframe for dual display (used in editor)
+local TestAuraDual = CreateFrame("Frame", "sATestDual", UIParent)
+TestAuraDual:SetFrameStrata("BACKGROUND")
+TestAuraDual:SetFrameLevel(128)
+TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "BACKGROUND")
+TestAuraDual.texture:SetAllPoints(TestAuraDual)
+TestAuraDual:Hide()
+sA.TestAuraDual = TestAuraDual
+
+-- Add TestFrames to SpecialFrames
+table.insert(UISpecialFrames, "sATest")
+table.insert(UISpecialFrames, "sATestDual")
+
+-- Build AuraList
+RefreshAuraList()
+
+
+
+-- EDITOR FUNCTIONS
+
+-- Save Aura
 local function SaveAura(id)
+	
+	-- Save Values
 	simpleAuras.auras[id].name = gui.editor.name:GetText()
 	simpleAuras.auras[id].unit = gui.editor.unitButton.text:GetText()
 	simpleAuras.auras[id].type = gui.editor.typeButton.text:GetText()
@@ -92,58 +191,34 @@ local function SaveAura(id)
 	simpleAuras.auras[id].ypos = gui.editor.y:GetText()
 	simpleAuras.auras[id].invert = gui.editor.invert.value
 	simpleAuras.auras[id].dual = gui.editor.dual.value
+
+	-- Clear Focus
 	gui.editor.name:ClearFocus()
 	gui.editor.texturePath:ClearFocus()
 	gui.editor.size:ClearFocus()
 	gui.editor.x:ClearFocus()
 	gui.editor.y:ClearFocus()
+
+	-- Hide TestAuras
 	sA.TestAura:Hide()
 	sA.TestAuraDual:Hide()
+
+	-- Hide and wipe Editor Window
 	gui.editor:Hide()
 	gui.editor = nil
+
+	-- Refresh AuraList and show Editor Window for Aura
 	RefreshAuraList()
 	sA:EditAura(id)
 	return
+	
 end
 
--- Add Button
-local add = CreateFrame("Button", nil, gui)
-add:SetPoint("TOPLEFT", 2, -2)
-add:SetWidth(20)
-add:SetHeight(20)
-sA:SkinFrame(add, {0.2, 0.2, 0.2, 1})
 
-add.text = add:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-add.text:SetPoint("CENTER", add, "CENTER", 0, 0)
-add.text:SetText("+")
-add:SetFontString(add.text)
 
-add:SetScript("OnClick", function() AddAura() end)
-add:SetScript("OnEnter", function() add:SetBackdropColor(0.1, 0.4, 0.1, 1) end)
-add:SetScript("OnLeave", function() add:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+-- EDITOR WINDOW
 
--- Close Button
-local close = CreateFrame("Button", nil, gui)
-close:SetWidth(20)
-close:SetHeight(20)
-close:SetPoint("TOPRIGHT", gui, "TOPRIGHT", -2, -2)
-sA:SkinFrame(close, {0.2, 0.2, 0.2, 1})
-
-close.text = close:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-close.text:SetPoint("CENTER", close, "CENTER", 0.5, 1)
-close.text:SetText("x")
-close:SetFontString(close.text)
-
-close:SetScript("OnClick", function()
-	gui:Hide()
-	sA.TestAura:Hide()
-	sA.TestAuraDual:Hide()
-end)
-
-close:SetScript("OnEnter", function() close:SetBackdropColor(0.4, 0.1, 0.1, 1) end)
-close:SetScript("OnLeave", function() close:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
-
--- Aura Editor
+-- Build Editor Window
 function sA:EditAura(id)
 	local aura = simpleAuras.auras[id]
 	if not aura then return end
@@ -475,22 +550,18 @@ function sA:EditAura(id)
 		ed.typeButton.text = ed.typeButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		ed.typeButton.text:SetPoint("CENTER", ed.typeButton, "CENTER", 0, 0)
 		ed.typeButton.text:SetText(aura.type or "Buff")
-
 		ed.typeButton:SetScript("OnClick", function()
 			-- If menu doesn't exist yet, create and store it
 			if not ed.typeButton.menu then
-			local menu = CreateFrame("Frame", nil, ed)
-			menu:SetPoint("TOPLEFT", ed.typeButton, "BOTTOMLEFT", 0, -2)
-			menu:SetFrameStrata("DIALOG")
-			menu:SetFrameLevel(10)
-			menu:SetWidth(80)
-			menu:SetHeight(40)
-			sA:SkinFrame(menu, {0.15, 0.15, 0.15, 1})
-			menu:Hide()
-
-			-- Store it
-			ed.typeButton.menu = menu
-
+				local menu = CreateFrame("Frame", nil, ed)
+				menu:SetPoint("TOPLEFT", ed.typeButton, "BOTTOMLEFT", 0, -2)
+				menu:SetFrameStrata("DIALOG")
+				menu:SetFrameLevel(10)
+				menu:SetWidth(80)
+				menu:SetHeight(40)
+				sA:SkinFrame(menu, {0.15, 0.15, 0.15, 1})
+				menu:Hide()
+				ed.typeButton.menu = menu
 			-- Create choices
 			local function makeChoice(text, index)
 				local b = CreateFrame("Button", nil, menu)
@@ -501,25 +572,23 @@ function sA:EditAura(id)
 				b.text = b:CreateFontString(nil, "OVERLAY", "GameFontWhite")
 				b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
 				b.text:SetText(text)
-
 				b:SetScript("OnClick", function()
-				ed.typeButton.text:SetText(text)
-				aura.type = text
-				menu:Hide()
+					ed.typeButton.text:SetText(text)
+					aura.type = text
+					menu:Hide()
 				end)
 			end
-
-			makeChoice("Buff", 1)
-			makeChoice("Debuff", 2)
+				makeChoice("Buff", 1)
+				makeChoice("Debuff", 2)
 			end
-
 			-- Toggle
 			local menu = ed.typeButton.menu
 			if menu:IsShown() then
-			menu:Hide()
+				menu:Hide()
 			else
-			menu:Show()
+				menu:Show()
 			end
+				
 		end)
 
 		-- Invert Label
@@ -553,6 +622,7 @@ function sA:EditAura(id)
 				ed.invert.value = 1
 			end
 			simpleAuras.auras[id].invert = ed.invert.value
+			SaveAura(id)
 		end)
 
 		-- Dual Label
@@ -660,8 +730,11 @@ function sA:EditAura(id)
 		gui.editor = ed
 	
 	end
+
+
 	
-	-- FUNCTIONS
+	-- EDITOR FUNCTIONS
+	
 	-- COPY
 	ed.copy:SetScript("OnClick", function() AddAura(id) end)
 	
@@ -745,10 +818,10 @@ function sA:EditAura(id)
 	
 end
 
--- Initiate List
-RefreshAuraList()
 
--- Slash Commands
+
+-- SLASH COMMAND
+
 SLASH_sA1 = "/sa"
 SLASH_sA2 = "/simpleauras"
 SlashCmdList["sA"] = function(msg)
