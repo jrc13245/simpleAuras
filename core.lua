@@ -17,7 +17,7 @@ function sA:SkinFrame(frame, bg, border)
 	frame:SetBackdropBorderColor(unpack(border or {0, 0, 0, 1}))
 end
 
--- Setup gui frame-- Create main GUI frame
+-- Create main GUI frame
 gui = CreateFrame("Frame", "sAGUI", UIParent)
 local title = gui:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 title:SetPoint("TOP", gui, "TOP", 0, -5)
@@ -33,42 +33,47 @@ gui:SetScript("OnDragStop", function() gui:StopMovingOrSizing() end)
 sA:SkinFrame(gui)
 gui:Hide()
 
-function sA:Init()
-	
-	for id, aura in ipairs(simpleAuras.auras) do
-		local frame = CreateFrame("Frame", "sAAura"..id, UIParent)
-		frame:SetFrameStrata("BACKGROUND")
-		frame:SetFrameLevel(128 - id)
-		frame.texture = frame:CreateTexture(nil, "BACKGROUND")
-		frame.texture:SetAllPoints(frame)
-		frame:Hide()
-		sA.frames[id] = frame
-	end
-  
-  sA:UpdateAuras()
-  
-end
-
+-- Create Testframe (used in editor)
 local TestAura = CreateFrame("Frame", "sATest", UIParent)
 TestAura:SetFrameStrata("BACKGROUND")
 TestAura:SetFrameLevel(128)
 TestAura.texture = TestAura:CreateTexture(nil, "BACKGROUND")
 TestAura.texture:SetAllPoints(TestAura)
-TestAura:SetFrameLevel(128)
 TestAura:Hide()
 sA.TestAura = TestAura
 
-local TestAuraDual = CreateFrame("Frame", "sATest", UIParent)
+-- Create Testframe for dual display (used in editor)
+local TestAuraDual = CreateFrame("Frame", "sATestDual", UIParent)
 TestAuraDual:SetFrameStrata("BACKGROUND")
 TestAuraDual:SetFrameLevel(128)
 TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "BACKGROUND")
 TestAuraDual.texture:SetAllPoints(TestAuraDual)
-TestAuraDual:SetFrameLevel(128)
 TestAuraDual:Hide()
 sA.TestAuraDual = TestAuraDual
 
+-- Add TestFrames to SpecialFrames
 table.insert(UISpecialFrames, "sATest")
+table.insert(UISpecialFrames, "sATestDual")
 
+-- Prepare Aura Frames
+function sA:Init()
+
+	sA.frames = {}
+	
+	for id, aura in ipairs(simpleAuras.auras) do
+		local frame = CreateFrame("Frame", "sAAura"..id, UIParent)
+		frame:SetFrameStrata("BACKGROUND")
+		frame.texture = frame:CreateTexture(nil, "BACKGROUND")
+		frame.texture:SetAllPoints(frame)
+		frame:Hide()
+		sA.frames[id] = frame
+	end
+
+	sA:UpdateAuras()
+  
+end
+
+-- Get AuraData
 function sA:GetAuraInfo(unit, index, auraType)
 
 	local name, texture, duration, stacks, buffindex
@@ -79,7 +84,8 @@ function sA:GetAuraInfo(unit, index, auraType)
 	end
 	
 	sAScanner:ClearLines()
-	
+
+	-- PLayerBuffs start with ID 0 instead of 1
 	if unit == "Player" then
 	
 		if auraType == "Buff" then
@@ -112,15 +118,21 @@ function sA:GetAuraInfo(unit, index, auraType)
 	
 end
 
+-- Update Auras
 function sA:UpdateAuras()
+
+	-- Hide Dual TestAura if GUI isn't shown
 	if not gui:IsShown() then
 		TestAuraDual:Hide()
 	end
+
+	-- Cycle through Auras
 	for id, aura in ipairs(simpleAuras.auras) do
 	
 		local i = 1
 		local show = 0
-		
+
+		-- Skip if <unnamed>
 		if aura.name == "" then return end
 		while true do
 		
@@ -128,63 +140,74 @@ function sA:UpdateAuras()
 			if not name then break end
 			if name == aura.name then
 				show = 1
+				-- Update aura icon if autodetect is active
 				if aura.autodetect == 1 then
 					aura.texture = icon
+					simpleAuras.auras[id].texture = aura.texture
 				end
 			end
 			i = i + 1
 		end
+
+		-- Switch 1 <-> if invert is active
+		if aura.invert == 1 then
+			show = 1 - show
+		end
+
+		-- Get Frames
+		local frame = sA.frames[id]
+		local dualframe = sA.dualframes[id]
 		
-		if show then
-			local frame = sA.frames[id]
-			local dualframe = sA.dualframes[id]
-			
-			if aura.invert == 1 then
-				show = 1 - show
-			end
-			
-			if (show == 1 or gui:IsShown()) and (not gui.editor or not gui.editor:IsShown()) then
-				frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
-				frame:SetFrameLevel((128 - id))
-				frame:SetWidth(aura.size or 32)
-				frame:SetHeight(aura.size or 32)
-				frame.texture:SetTexture(aura.texture)
-				simpleAuras.auras[id].texture = aura.texture
-				frame.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
-				frame:Show()
-				
-				if aura.dual == 1 then
-					if not sA.dualframes[id] then
-						dualframe = CreateFrame("Frame", "sAAura"..id, UIParent)
-						dualframe:SetFrameStrata("BACKGROUND")
-						dualframe:SetFrameLevel(128 - id)
-						dualframe.texture = dualframe:CreateTexture(nil, "BACKGROUND")
-						dualframe.texture:SetAllPoints(dualframe)
-						dualframe:Hide()
-						sA.dualframes[id] = dualframe
-					end
-					dualframe:SetPoint("CENTER", UIParent, "CENTER", (-1*aura.xpos) or 0, aura.ypos or 0)
-					dualframe:SetFrameLevel((128 - id))
-					dualframe:SetWidth(aura.size or 32)
-					dualframe:SetHeight(aura.size or 32)
-					dualframe.texture:SetTexture(aura.texture)
-					dualframe.texture:SetTexCoord(1, 0, 0, 1)
-					simpleAuras.auras[id].texture = aura.texture
-					dualframe.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
-					dualframe:Show()
-				end
-				
-			else
-				frame:Hide()
-				if aura.dual and dualframe then
+		-- Show if Conditions met or main GUI is shown - but not if AuraEditor is open
+		if (show == 1 or gui:IsShown()) and (not gui.editor or not gui.editor:IsShown()) then
+
+			-- Update Aura Display and Show
+			frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
+			frame:SetFrameLevel((128 - id)) -- Set z-index according to ID Order
+			frame:SetWidth(aura.size or 32)
+			frame:SetHeight(aura.size or 32)
+			frame.texture:SetTexture(aura.texture)
+			frame.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
+			frame:Show()
+
+			-- if DualDisplay is active
+			if aura.dual == 1 then
+
+				-- Create DualFrame if not already existing
+				if not sA.dualframes[id] then
+					dualframe = CreateFrame("Frame", "sAAura"..id, UIParent)
+					dualframe:SetFrameStrata("BACKGROUND")
+					dualframe.texture = dualframe:CreateTexture(nil, "BACKGROUND")
+					dualframe.texture:SetAllPoints(dualframe)
 					dualframe:Hide()
+					sA.dualframes[id] = dualframe
 				end
+
+				-- Update DualAura Display and Show: Mirror the Standard Aura horizontally
+				dualframe:SetPoint("CENTER", UIParent, "CENTER", (-1*aura.xpos) or 0, aura.ypos or 0)
+				dualframe:SetFrameLevel((128 - id)) -- Set z-index according to ID Order
+				dualframe:SetWidth(aura.size or 32)
+				dualframe:SetHeight(aura.size or 32)
+				dualframe.texture:SetTexture(aura.texture)
+				dualframe.texture:SetTexCoord(1, 0, 0, 1) -- Mirror Aura horizontally
+				dualframe.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
+				dualframe:Show()
 			end
+			
+		else
+
+			-- Hide Frames if neither Conditions are met nor main GUI is open - or when Editor is opened
+			frame:Hide()
+			if aura.dual and dualframe then
+				dualframe:Hide()
+			end
+			
 		end
 		
 	end
 end
 
+-- Events Setup
 sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 sAEvent:RegisterEvent("PLAYER_ENTERING_WORLD")
 sAEvent:SetScript("OnEvent", function() sA:Init() end)
@@ -198,4 +221,5 @@ sAEvent:SetScript("OnUpdate", function()
 end)
 
 sAScanner = CreateFrame("GameTooltip", "sAScanner", UIParent, "GameTooltipTemplate")
+
 sAScanner:SetOwner(UIParent, "ANCHOR_NONE")
