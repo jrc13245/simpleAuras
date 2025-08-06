@@ -1,52 +1,46 @@
-sA.TestAura:Hide()
-sA.TestAuraDual:Hide()
-
-table.insert(UISpecialFrames, "sAGUI")
-
 -- Aura List Refresh
 local function RefreshAuraList()
 
-	if gui.list then for _, b in ipairs(gui.list) do b:Hide() end end
+	-- Hide Previous Items and wipe AuraList
+	for _, prevAuraList in ipairs(gui.list or {}) do prevAuraList:Hide() end
 	gui.list = {}
 
-	for i, aura in ipairs(simpleAuras.auras) do
-	
-		local id = i
-		local b = CreateFrame("Button", nil, gui)
-		b:SetWidth(260)
-		b:SetHeight(20)
-		b:SetPoint("TOPLEFT", 20, -30 - (i - 1) * 22)
-		sA:SkinFrame(b, {0.2, 0.2, 0.2, 1})
-	
-		local color = simpleAuras.auras[i].color or {1, 1, 1}
-	
-		b.text = b:CreateFontString(nil, "ARTWORK", "GameFontWhite")
-		b.text:SetPoint("LEFT", b, "LEFT", 5, 0)
-		b.text:SetText("["..i.."] "..(aura.name ~= "" and aura.name or "<unnamed>"))
-		b.text:SetTextColor(unpack(color))
+	-- Cycle through all Auras
+	for id, aura in ipairs(simpleAuras.auras) do
 
-		b:SetScript("OnClick", function()
-		if gui.editor then
-			sA.TestAura:Hide()
-			sA.TestAuraDual:Hide()
-			gui.editor:Hide()
-			gui.editor = nil
-		end
-		sA:EditAura(id)
-		
-	end)
-	
-		b:SetScript("OnEnter", function() b:SetBackdropColor(0.3, 0.3, 0.3, 1) end)
-		b:SetScript("OnLeave", function() b:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+		-- Create List Item
+		local ListItem = CreateFrame("Button", nil, gui)
+		ListItem:SetWidth(260)
+		ListItem:SetHeight(20)
+		ListItem:SetPoint("TOPLEFT", 20, -30 - (i - 1) * 22)
+		sA:SkinFrame(ListItem, {0.2, 0.2, 0.2, 1})
+		ListItem:SetScript("OnEnter", function() ListItem:SetBackdropColor(0.3, 0.3, 0.3, 1) end)
+		ListItem:SetScript("OnLeave", function() ListItem:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
-		gui.list[i] = b
+		-- Create Item Text
+		ListItem.text = ListItem:CreateFontString(nil, "ARTWORK", "GameFontWhite")
+		ListItem.text:SetPoint("LEFT", ListItem, "LEFT", 5, 0)
+		ListItem.text:SetText("["..id.."] "..(aura.name ~= "" and aura.name or "<unnamed>"))
+		ListItem.text:SetTextColor(unpack(aura.color or {1, 1, 1}))
+		ListItem:SetScript("OnClick", function()
+			if gui.editor then
+				sA.TestAura:Hide()
+				sA.TestAuraDual:Hide()
+				gui.editor:Hide()
+				gui.editor = nil
+			end
+			sA:EditAura(id)
+		end)
+
+		-- Add to AuraList
+		gui.list[i] = ListItem
 		
 	end
 	
 end
 
--- Copy function
-local function DeepCopy(original)
+-- Copy independently
+local function independentCopy(original)
 	local copy = {}
 	for k, v in pairs(original) do
 		if type(v) == "table" then
@@ -66,7 +60,7 @@ local function AddAura(id)
 	simpleAuras.auras[newid].name = ""
 	simpleAuras.auras[newid].texture = "Interface\\Icons\\INV_Misc_QuestionMark"
 	if id then
-		simpleAuras.auras[newid] = DeepCopy(simpleAuras.auras[id])
+		simpleAuras.auras[newid] = independentCopy(simpleAuras.auras[id])
 	end
 	if gui.editor:IsShown() then
 		gui.editor:Hide()
@@ -695,7 +689,7 @@ function sA:EditAura(id)
 		msg:SetText("Delete '["..id.."] "..(aura.name ~= "" and aura.name or "<unnamed>").."'?")
 		msg:SetTextColor(1,0,0)
 	
-		-- Yes Button
+		-- Delete? Yes
 		local yes = CreateFrame("Button", nil, ed.confirm)
 		yes:SetPoint("BOTTOMLEFT", 30, 10)
 		yes:SetWidth(60)
@@ -724,7 +718,7 @@ function sA:EditAura(id)
 			RefreshAuraList()
 		end)
 	
-		-- No Button
+		-- Delete? No
 		local no = CreateFrame("Button", nil, ed.confirm)
 		no:SetPoint("BOTTOMRIGHT", -30, 10)
 		no:SetWidth(60)
@@ -751,23 +745,26 @@ function sA:EditAura(id)
 	
 end
 
--- Initial List
+-- Initiate List
 RefreshAuraList()
 
--- Slash command
+-- Slash Commands
 SLASH_sA1 = "/sa"
 SLASH_sA2 = "/simpleauras"
 SlashCmdList["sA"] = function(msg)
-	if type(msg) ~= "string" then
-        msg = ""
-    end
 
-    local cmd, val
-    local s, e, a, b = string.find(msg, "^(%S*)%s*(%S*)$")
-    if a then cmd = a else cmd = "" end
-    if b then val = b else val = "" end
+	-- Get Command
+	if type(msg) ~= "string" then
+		msg = ""
+	end
+
+	-- Get Command Arguments
+	local cmd, val
+	local s, e, a, b = string.find(msg, "^(%S*)%s*(%S*)$")
+	if a then cmd = a else cmd = "" end
+	if b then val = b else val = "" end
 	
-	-- hide / show
+	-- hide / show or no command
 	if cmd == "" or cmd == "show" or cmd == "hide" then
 		if cmd == "show" then
 			if not gui:IsShown() then gui:Show() end
@@ -780,8 +777,8 @@ SlashCmdList["sA"] = function(msg)
 		return
 	end
 	
-	-- refresh
-    if cmd == "refresh" then
+	-- refresh command
+	if cmd == "refresh" then
 		local num = tonumber(val)
 		if num and num >= 1 and num <= 10 then
 			simpleAuras.refresh = num
@@ -793,9 +790,9 @@ SlashCmdList["sA"] = function(msg)
 		return
 	end
 
-    -- Unknown command fallback
-    DEFAULT_CHAT_FRAME:AddMessage("Usage:")
-    DEFAULT_CHAT_FRAME:AddMessage("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
-    DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
-	
+	-- Unknown command fallback
+	DEFAULT_CHAT_FRAME:AddMessage("Usage:")
+	DEFAULT_CHAT_FRAME:AddMessage("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
+	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
+
 end
