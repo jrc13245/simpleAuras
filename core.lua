@@ -134,7 +134,7 @@ function sA:UpdateAuras()
 			frame:SetWidth(aura.size or 32)
 			frame:SetHeight(aura.size or 32)
 			frame.texture:SetTexture(aura.texture)
-			frame.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
+			frame.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
 			frame:Show()
 
 			-- if DualDisplay is active
@@ -157,7 +157,7 @@ function sA:UpdateAuras()
 				dualframe:SetHeight(aura.size or 32)
 				dualframe.texture:SetTexture(aura.texture)
 				dualframe.texture:SetTexCoord(1, 0, 0, 1) -- Mirror Aura horizontally
-				dualframe.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
+				dualframe.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
 				dualframe:Show()
 			end
 			
