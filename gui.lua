@@ -18,7 +18,7 @@ local function RefreshAuraList()
 		ListItem:SetHeight(20)
 		ListItem:SetPoint("TOPLEFT", 20, -30 - (id - 1) * 22)
 		sA:SkinFrame(ListItem, {0.2, 0.2, 0.2, 1})
-		ListItem:SetScript("OnEnter", function() ListItem:SetBackdropColor(0.3, 0.3, 0.3, 1) end)
+		ListItem:SetScript("OnEnter", function() ListItem:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
 		ListItem:SetScript("OnLeave", function() ListItem:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
 		-- Create Item Text
@@ -37,6 +37,42 @@ local function RefreshAuraList()
 			-- Open Edit Window for Aura
 			sA:EditAura(id)
 		end)
+	
+		-- Up Button
+		if id > 1 then
+			local up = CreateFrame("Button", nil, ListItem)
+			up:SetWidth(15)
+			up:SetHeight(15)
+			up:SetPoint("RIGHT", ListItem, "RIGHT", -19, 0)
+			sA:SkinFrame(up, {0.15, 0.15, 0.15, 1})
+			up.text = up:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+			up.text:SetFont("Fonts\\FRIZQT__.TTF", 24)
+			up.text:SetPoint("CENTER", up, "CENTER", -1, -8)
+			up.text:SetText("ˆ")
+			up:SetFontString(up.text)
+			up:SetScript("OnClick", function()
+				simpleAuras.auras[id], simpleAuras.auras[id-1] = simpleAuras.auras[id-1], simpleAuras.auras[id]
+				RefreshAuraList()
+			end)
+		end
+
+		-- Down Button
+		if id < table.getn(simpleAuras.auras) then
+			local down = CreateFrame("Button", nil, ListItem)
+			down:SetWidth(15)
+			down:SetHeight(15)
+			down:SetPoint("RIGHT", ListItem, "RIGHT", -2, 0)
+			sA:SkinFrame(down, {0.15, 0.15, 0.15, 1})
+			down.text = down:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+			down.text:SetFont("Fonts\\FRIZQT__.TTF", 24)
+			down.text:SetPoint("CENTER", down, "CENTER", -1, -8)
+			down.text:SetText("ˇ")
+			down:SetFontString(down.text)
+			down:SetScript("OnClick", function()
+				simpleAuras.auras[id], simpleAuras.auras[id+1] = simpleAuras.auras[id+1], simpleAuras.auras[id]
+				RefreshAuraList()
+			end)
+		end
 
 		-- Add to AuraList
 		gui.list[id] = ListItem
@@ -56,7 +92,7 @@ local function SaveAura(id)
 	simpleAuras.auras[id].name = gui.editor.name:GetText()
 	simpleAuras.auras[id].unit = gui.editor.unitButton.text:GetText()
 	simpleAuras.auras[id].type = gui.editor.typeButton.text:GetText()
-	simpleAuras.auras[id].color = gui.editor.currentColor
+	simpleAuras.auras[id].color = gui.editor.color
 	simpleAuras.auras[id].autodetect = gui.editor.autoDetect.value
 	simpleAuras.auras[id].texture = gui.editor.texturePath:GetText()
 	simpleAuras.auras[id].size = gui.editor.size:GetText()
@@ -233,7 +269,7 @@ function sA:EditAura(id)
 		sA.TestAura:SetWidth(aura.size or 32)
 		sA.TestAura:SetHeight(aura.size or 32)
 		sA.TestAura.texture:SetTexture(aura.texture)
-		sA.TestAura.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
+		sA.TestAura.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
 		sA.TestAura:Show()
 		
 		if aura.dual == 1 then
@@ -242,7 +278,7 @@ function sA:EditAura(id)
 			sA.TestAuraDual:SetHeight(aura.size or 32)
 			sA.TestAuraDual.texture:SetTexture(aura.texture)
 			sA.TestAuraDual.texture:SetTexCoord(1, 0, 0, 1)
-			sA.TestAuraDual.texture:SetVertexColor(unpack(aura.color or {1, 1, 1}))
+			sA.TestAuraDual.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
 			sA.TestAuraDual:Show()
 		end
 	
@@ -302,48 +338,78 @@ function sA:EditAura(id)
 		ed.texLabel:SetPoint("TOPLEFT", lineone, "BOTTOMLEFT", 0, -15)
 		ed.texLabel:SetText("Icon/Texture:")
 
-		-- Colorpicker stub (frame placeholder only)
-		ed.colorSwatch = CreateFrame("Button", nil, ed)
-		ed.colorSwatch:SetWidth(16)
-		ed.colorSwatch:SetHeight(16)
-		ed.colorSwatch:SetPoint("LEFT", ed.texLabel, "RIGHT", 5, 0)
-		sA:SkinFrame(ed.colorSwatch, {1, 1, 1, 1})
-		ed.currentColor = aura.color or {1, 1, 1}
-		ed.colorSwatch:SetBackdropColor(unpack(ed.currentColor))
-		ed.colorSwatch:SetScript("OnClick", function()
-			local r, g, b = unpack(ed.currentColor or aura.color or {1, 1, 1})
-			ColorPickerFrame:SetColorRGB(r, g, b)
-			ColorPickerFrame.previousValues = {r, g, b}
-			ColorPickerFrame.cancelFunc = function(prev)
-			ed.currentColor = {unpack(prev)}
-			ed.colorSwatch:SetBackdropColor(unpack(ed.currentColor))
-			simpleAuras.auras[id].color = ed.currentColor
-			sA.TestAura.texture:SetVertexColor(unpack(ed.currentColor))
-			if aura.dual then
-				sA.TestAuraDual.texture:SetVertexColor(unpack(ed.currentColor))
+
+
+		-- Color Picker with Alpha (from pfUI)
+		ed.colorpicker = CreateFrame("Button", nil, ed)
+		ed.colorpicker:SetWidth(24)
+		ed.colorpicker:SetHeight(12)
+		ed.colorpicker:SetPoint("LEFT", ed.texLabel, "RIGHT", 5, 0)
+		sA:SkinFrame(ed.colorpicker, {1, 1, 1, 1}) -- Use your existing skin function
+
+		-- Display current color
+		ed.colorpicker.prev = ed.colorpicker:CreateTexture(nil, "OVERLAY")
+		ed.colorpicker.prev:SetAllPoints(ed.colorpicker)
+
+		local cr, cg, cb, ca = unpack(simpleAuras.auras[id].color or {1, 1, 1, 1})
+		ed.colorpicker.prev:SetTexture(cr, cg, cb, ca)
+		ed.color = simpleAuras.auras[id].color
+
+		ed.colorpicker:SetScript("OnClick", function()
+		  local preview = this.prev
+		  local r0, g0, b0, a0 = unpack(simpleAuras.auras[id].color or {1, 1, 1, 1})
+
+		  -- Apply selected color
+		  function ColorPickerFrame.func()
+			local r, g, b = ColorPickerFrame:GetColorRGB()
+			local a = 1 - OpacitySliderFrame:GetValue()
+
+			r = math.floor(r * 100 + 0.5) / 100
+			g = math.floor(g * 100 + 0.5) / 100
+			b = math.floor(b * 100 + 0.5) / 100
+			a = math.floor(a * 100 + 0.5) / 100
+			
+			preview:SetTexture(r, g, b, a)
+
+			sA.TestAura.texture:SetVertexColor(r, g, b, a)
+			if simpleAuras.auras[id].dual == 1 then
+			  sA.TestAuraDual.texture:SetVertexColor(r, g, b, a)
 			end
-			gui.list[id].text:SetTextColor(unpack(ed.currentColor))
+			gui.list[id].text:SetTextColor(r, g, b, a)
+
+            if not this:GetParent():IsShown() then
+              simpleAuras.auras[id].color = {r, g, b, a}
+              ed.color = {r, g, b, a}
+            end
+			
+		  end
+
+		  -- Revert on cancel
+		  function ColorPickerFrame.cancelFunc()
+			preview:SetTexture(r0, g0, b0, a0)
+			sA.TestAura.texture:SetVertexColor(r0, g0, b0, a0)
+			if simpleAuras.auras[id].dual == 1 then
+			  sA.TestAuraDual.texture:SetVertexColor(r0, g0, b0, a0)
 			end
-			ColorPickerFrame.func = function()
-			local nr, ng, nb = ColorPickerFrame:GetColorRGB()
-			ed.currentColor = {nr, ng, nb}
-			simpleAuras.auras[id].color = ed.currentColor
-			ed.colorSwatch:SetBackdropColor(unpack(ed.currentColor))
-			sA.TestAura.texture:SetVertexColor(unpack(ed.currentColor))
-			if aura.dual then
-				sA.TestAuraDual.texture:SetVertexColor(unpack(ed.currentColor))
-			end
-			gui.list[id].text:SetTextColor(unpack(ed.currentColor))
-			end
-			ColorPickerFrame:Hide()
-			ColorPickerFrame:Show()
+			gui.list[id].text:SetTextColor(r0, g0, b0, a0)
+		  end
+
+		  -- Configure and show the ColorPickerFrame
+		  ColorPickerFrame:SetColorRGB(r0, g0, b0)
+		  ColorPickerFrame.hasOpacity = true
+		  ColorPickerFrame.opacityFunc = ColorPickerFrame.func
+		  ColorPickerFrame.opacity = 1 - a0
+		  ColorPickerFrame:SetFrameStrata("DIALOG")
+		  ShowUIPanel(ColorPickerFrame)
 		end)
+
+
 
 		-- Autodetect checkbox
 		ed.autoDetect = CreateFrame("Button", nil, ed)
 		ed.autoDetect:SetWidth(16)
 		ed.autoDetect:SetHeight(16)
-		ed.autoDetect:SetPoint("LEFT", ed.colorSwatch, "RIGHT", 82, 0)
+		ed.autoDetect:SetPoint("LEFT", ed.colorpicker, "RIGHT", 73, 0)
 		sA:SkinFrame(ed.autoDetect, {0.15, 0.15, 0.15, 1})
 
 		ed.autoDetect.checked = ed.autoDetect:CreateTexture(nil, "OVERLAY")
@@ -405,6 +471,172 @@ function sA:EditAura(id)
 		ed.browseBtn.text:SetPoint("CENTER", ed.browseBtn, "CENTER", 0, 0)
 		ed.browseBtn.text:SetText("Browse")
 		ed.browseBtn:SetFontString(ed.browseBtn.text)
+		
+		
+		
+		ed.browseBtn:SetScript("OnClick", function()
+		  if ed.browseFrame then
+			ed.browseFrame:Show()
+			return
+		  end
+
+		  -- Create the overlay frame
+		  local bf = CreateFrame("Frame", nil, ed)
+		  bf:SetAllPoints(ed)
+		  bf:SetFrameStrata("DIALOG")
+		  sA:SkinFrame(bf)
+		  ed.browseFrame = bf
+		  
+		  -- Title
+		ed.browsetitle = bf:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.browsetitle:SetPoint("TOP", bf, "TOP", 0, -5)
+		ed.browsetitle:SetText("Select Texture")
+
+		  -- Close button
+		  local close = CreateFrame("Button", nil, bf)
+		  close:SetWidth(20)
+		  close:SetHeight(20)
+		  close:SetPoint("TOPRIGHT", -2, -2)
+		  sA:SkinFrame(close, {0.2, 0.2, 0.2, 1})
+		  close.text = close:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		  close.text:SetPoint("CENTER", close, "CENTER", 0.5, 1)
+		  close.text:SetText("x")
+		  close:SetFontString(close.text)
+		  close:SetScript("OnClick", function()
+			bf:Hide()
+		  end)
+
+		  -- ScrollFrame setup
+			local scroll = CreateFrame("ScrollFrame", nil, bf)
+			scroll:SetPoint("TOPLEFT", 10, -30)
+			scroll:SetPoint("BOTTOMRIGHT", -10, 40)
+
+			local content = CreateFrame("Frame", nil, scroll)
+			content:SetWidth(250)
+			content:SetHeight(1000)
+			scroll:SetScrollChild(content)
+
+			-- Add mouse wheel support using a frame overlay
+			local wheel = CreateFrame("Frame", nil, scroll)
+			wheel:SetAllPoints(scroll)
+			wheel:EnableMouseWheel(true)
+			wheel:SetScript("OnMouseWheel", function()
+			local dir = arg1 or 0
+			  local step = 30
+			  local current = scroll:GetVerticalScroll() or 0
+			  local max = (content:GetHeight() or 0) - (scroll:GetHeight() or 1)
+			  local target = math.max(0, math.min(current - dir * step, max))
+			  scroll:SetVerticalScroll(target)
+			end)
+
+
+		  -- Create grid of texture buttons
+		  local numPerRow = 6
+		  local size = 36
+		  local padding = 4
+		  local total = 246
+		  local rows = math.ceil(total / numPerRow)
+		  local selectedTexture
+
+		  content:SetHeight(rows * (size + padding))
+
+		  for i = 1, total do
+			local btn = CreateFrame("Button", nil, content)
+			local row = math.floor((i - 1) / numPerRow)
+			local col = math.mod(i - 1, numPerRow)
+			btn:SetWidth(size)
+			btn:SetHeight(size)
+			btn:SetPoint("TOPLEFT", col * (size + padding) + 22, -row * (size + padding))
+
+			local tex = btn:CreateTexture(nil, "BACKGROUND")
+			tex:SetAllPoints(btn)
+			tex:SetTexture("Interface\\AddOns\\simpleAuras\\Auras\\Aura" .. i)
+
+			btn.texturePath = "Interface\\AddOns\\simpleAuras\\Auras\\Aura" .. i
+
+			btn:SetScript("OnClick", function()
+			  selectedTexture = btn.texturePath
+			  -- Highlight selected
+			  for _, child in ipairs({content:GetChildren()}) do
+				child:SetBackdropColor(0.2, 0.2, 0.2, 1)
+			  end
+			  sA:SkinFrame(btn, {0.5, 0.5, 0.5, 1})
+			end)
+
+			sA:SkinFrame(btn, {0.2, 0.2, 0.2, 1})
+		  end
+		  
+		  
+		  
+-- Custom styled scrollbar
+local scrollbar = CreateFrame("Slider", nil, bf)
+scrollbar:SetOrientation("VERTICAL")
+scrollbar:SetWidth(10)
+scrollbar:SetPoint("TOPRIGHT", scroll, "TOPRIGHT", 4, 0)
+scrollbar:SetPoint("BOTTOMRIGHT", scroll, "BOTTOMRIGHT", 4, 0)
+sA:SkinFrame(scrollbar, {0.2, 0.2, 0.2, 1})
+
+-- Scroll thumb (the draggable knob)
+local thumb = scrollbar:CreateTexture(nil, "OVERLAY")
+thumb:SetTexture("Interface\\Buttons\\WHITE8x8")
+thumb:SetVertexColor(1, 0.8, 0.1, 1)
+thumb:SetWidth(6)
+thumb:SetHeight(30)
+scrollbar:SetThumbTexture(thumb)
+
+scrollbar:SetMinMaxValues(0, 1)
+scrollbar:SetValueStep(1)
+scrollbar:SetValue(0)
+
+-- Sync slider to scroll frame
+scrollbar:SetScript("OnValueChanged", function()
+  scroll:SetVerticalScroll(scrollbar:GetValue())
+end)
+
+scroll:SetScript("OnVerticalScroll", function()
+  scrollbar:SetValue(scroll:GetVerticalScroll())
+end)
+
+
+-- Update scroll position when scrollbar moves
+scrollbar:SetScript("OnValueChanged", function()
+  scroll:SetVerticalScroll(scrollbar:GetValue())
+end)
+
+-- Link scrollframe to scrollbar
+scroll:SetScript("OnVerticalScroll", function()
+  scrollbar:SetValue(scroll:GetVerticalScroll())
+end)
+-- Update scrollbar range
+local contentHeight = content:GetHeight()
+local visibleHeight = scroll:GetHeight()
+local maxScroll = math.max(0, contentHeight - visibleHeight - 332)
+scrollbar:SetMinMaxValues(0, maxScroll)
+scrollbar:SetValue(0)
+
+
+
+		  -- Select button
+		  local select = CreateFrame("Button", nil, bf)
+		  select:SetWidth(80)
+		  select:SetHeight(20)
+		  select:SetPoint("BOTTOM", 0, 10)
+		  sA:SkinFrame(select, {0.2, 0.2, 0.2, 1})
+		  select.text = select:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		  select.text:SetPoint("CENTER", select, "CENTER", 0, 0)
+		  select.text:SetText("Select")
+		  select:SetFontString(select.text)
+
+		  select:SetScript("OnClick", function()
+			if selectedTexture then
+			  ed.texturePath:SetText(selectedTexture)
+			  ed.browseFrame:Hide()
+			  SaveAura(id)
+			end
+		  end)
+		end)
+		
+		
 
 		-- Size Label
 		ed.sizeLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -732,7 +964,7 @@ function sA:EditAura(id)
 		ed.copy.text:SetPoint("CENTER", ed.copy, "CENTER", 0.5, 1)
 		ed.copy.text:SetText("c")
 		ed.copy:SetFontString(ed.copy.text)
-		ed.copy:SetScript("OnEnter", function() ed.copy:SetBackdropColor(0.3, 0.3, 0.3, 1) end)
+		ed.copy:SetScript("OnEnter", function() ed.copy:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
 		ed.copy:SetScript("OnLeave", function() ed.copy:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
 		gui.editor = ed
