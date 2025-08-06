@@ -128,6 +128,7 @@ function sA:UpdateAuras()
 
 	-- Hide Dual TestAura if GUI isn't shown
 	if not gui:IsShown() then
+		TestAura:Hide()
 		TestAuraDual:Hide()
 	end
 
@@ -231,4 +232,5 @@ sAEvent:SetScript("OnUpdate", function()
 	sAEvent.lastUpdate = time
 	sA:UpdateAuras()
 end)
+
 
