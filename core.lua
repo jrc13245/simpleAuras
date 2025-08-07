@@ -167,11 +167,15 @@ function sA:UpdateAuras()
 			if aura.duration and aura.duration == 1 and aura.unit == "Player" then
 				-- Duration Text
 				frame.durationtext:SetText(currentDuration)
+			else
+				frame.durationtext:SetText("")
 			end
 			
 			if aura.stacks and aura.stacks == 1 then
 				-- Duration Text
 				frame.stackstext:SetText(currentStacks)
+			else
+				frame.stackstext:SetText("")
 			end
 			
 			frame:Show()
@@ -206,11 +210,15 @@ function sA:UpdateAuras()
 				if aura.duration and aura.duration == 1 and aura.unit == "Player" then
 					-- Duration Text
 					dualframe.durationtext:SetText(currentDuration)
+				else
+					dualframe.durationtext:SetText("")
 				end
 				
 				if aura.stacks and aura.stacks == 1 then
 					-- Duration Text
 					dualframe.stackstext:SetText(currentStacks)
+				else
+					dualframe.stackstext:SetText("")
 				end
 				
 				dualframe:Show()
