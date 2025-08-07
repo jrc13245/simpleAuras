@@ -8,6 +8,11 @@ sA.dualframes = {}
 simpleAuras.auras = simpleAuras.auras or {}
 simpleAuras.refresh = simpleAuras.refresh or 5
 
+-- Set AddOnFrame
+local sAParent = CreateFrame("Frame", "sAParentFrame", nil)
+sAParent:SetFrameStrata("BACKGROUND")
+sAParent:SetAllPoints(UIParent)
+
 -- Function to skin frames with flat background and 1px black border
 function sA:SkinFrame(frame, bg, border)
 	frame:SetBackdrop({
@@ -26,8 +31,8 @@ function sA:GetAuraInfo(unit, index, auraType)
 
 	-- Create Scanner-Tooltip if not previously created
 	if not sAScanner then
-		sAScanner = CreateFrame("GameTooltip", "sAScanner", UIParent, "GameTooltipTemplate")
-		sAScanner:SetOwner(UIParent, "ANCHOR_NONE")
+		sAScanner = CreateFrame("GameTooltip", "sAScanner", sAParent, "GameTooltipTemplate")
+		sAScanner:SetOwner(sAParent, "ANCHOR_NONE")
 	end
 
 	-- Wipe Scanner-Tooltip Data
@@ -58,6 +63,8 @@ function sA:GetAuraInfo(unit, index, auraType)
 			icon = UnitDebuff(unit, index)
 		end
 		
+		duration = 0 -- temp
+		
 	end
 
 	name = sAScannerTextLeft1:GetText()
@@ -82,6 +89,8 @@ function sA:UpdateAuras()
 	-- Cycle through Auras
 	for id, aura in ipairs(simpleAuras.auras) do
 	
+		local currentDuration = nil
+		local currentStacks = nil
 		local i = 1
 		local show = 0
 
@@ -93,6 +102,8 @@ function sA:UpdateAuras()
 				if not name then break end
 				if name == aura.name then
 					show = 1
+					currentDuration = duration
+					currentStacks = stacks
 					-- Update aura icon if autodetect is active
 					if aura.autodetect == 1 then
 						aura.texture = icon
@@ -120,13 +131,30 @@ function sA:UpdateAuras()
 
 			-- Create AuraFrame if not already existing
 			if not sA.frames[id] then
-				frame = CreateFrame("Frame", "sAAura"..id, UIParent)
-				frame:SetFrameStrata("BACKGROUND")
-				frame.texture = frame:CreateTexture(nil, "BACKGROUND")
-				frame.texture:SetAllPoints(frame)
-				frame:Hide()
-				sA.frames[id] = frame
+			  frame = CreateFrame("Frame", "sAAura"..id, UIParent)
+			  frame:SetFrameStrata("BACKGROUND")
+			  frame.durationtext = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			  frame.durationtext:SetPoint("CENTER", frame, "CENTER", 0, 0)
+			  frame.stackstext = frame:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+			  frame.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
+			  frame.stackstext:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
+			  sA.frames[id] = frame
+			else
+			  frame = sA.frames[id]
 			end
+
+			-- Ensure texture exists
+			if not frame.texture then
+			  frame.texture = frame:CreateTexture(nil, "BACKGROUND")
+			  frame.texture:SetAllPoints(frame)
+			end
+			
+			if aura.lowduration == 1 and currentDuration and currentDuration <= aura.lowdurationvalue then
+				auracolor = aura.lowdurationcolor or {1, 0, 0, 1}
+			else
+				auracolor = aura.auracolor or {1, 1, 1, 1}
+			end
+
 
 			-- Update Aura Display and Show
 			frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
@@ -134,7 +162,18 @@ function sA:UpdateAuras()
 			frame:SetWidth(aura.size or 32)
 			frame:SetHeight(aura.size or 32)
 			frame.texture:SetTexture(aura.texture)
-			frame.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
+			frame.texture:SetVertexColor(unpack(auracolor))
+			
+			if aura.duration and aura.duration == 1 and aura.unit == "Player" then
+				-- Duration Text
+				frame.durationtext:SetText(currentDuration)
+			end
+			
+			if aura.stacks and aura.stacks == 1 then
+				-- Duration Text
+				frame.stackstext:SetText(currentStacks)
+			end
+			
 			frame:Show()
 
 			-- if DualDisplay is active
@@ -146,6 +185,11 @@ function sA:UpdateAuras()
 					dualframe:SetFrameStrata("BACKGROUND")
 					dualframe.texture = dualframe:CreateTexture(nil, "BACKGROUND")
 					dualframe.texture:SetAllPoints(dualframe)
+				    dualframe.durationtext = dualframe:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				    dualframe.durationtext:SetPoint("CENTER", dualframe, "CENTER", 0, 0)
+				    dualframe.stackstext = dualframe:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+				    dualframe.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
+				    dualframe.stackstext:SetPoint("BOTTOMRIGHT", dualframe, "BOTTOMRIGHT", -2, 2)
 					dualframe:Hide()
 					sA.dualframes[id] = dualframe
 				end
@@ -157,7 +201,18 @@ function sA:UpdateAuras()
 				dualframe:SetHeight(aura.size or 32)
 				dualframe.texture:SetTexture(aura.texture)
 				dualframe.texture:SetTexCoord(1, 0, 0, 1) -- Mirror Aura horizontally
-				dualframe.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
+				dualframe.texture:SetVertexColor(unpack(auracolor))
+			
+				if aura.duration and aura.duration == 1 and aura.unit == "Player" then
+					-- Duration Text
+					dualframe.durationtext:SetText(currentDuration)
+				end
+				
+				if aura.stacks and aura.stacks == 1 then
+					-- Duration Text
+					dualframe.stackstext:SetText(currentStacks)
+				end
+				
 				dualframe:Show()
 			end
 			
@@ -177,7 +232,7 @@ function sA:UpdateAuras()
 end
 
 -- Events Setup
-sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
+sAEvent = CreateFrame("Frame", "sAEvent", sAParent)
 
 -- Timebased Update of Aura Displays every (1-refresh)secs
 sAEvent:SetScript("OnUpdate", function()
@@ -188,6 +243,3 @@ sAEvent:SetScript("OnUpdate", function()
 	sAEvent.lastUpdate = time
 	sA:UpdateAuras()
 end)
-
-
-
