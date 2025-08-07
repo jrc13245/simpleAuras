@@ -240,6 +240,12 @@ TestAura:SetFrameStrata("BACKGROUND")
 TestAura:SetFrameLevel(128)
 TestAura.texture = TestAura:CreateTexture(nil, "BACKGROUND")
 TestAura.texture:SetAllPoints(TestAura)
+TestAura.durationtext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+TestAura.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+TestAura.durationtext:SetPoint("CENTER", TestAura, "CENTER", 0, 0)
+TestAura.stackstext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+TestAura.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
+TestAura.stackstext:SetPoint("TOPLEFT", TestAura.durationtext, "CENTER", 1, -6)
 TestAura:Hide()
 sA.TestAura = TestAura
 
@@ -249,6 +255,12 @@ TestAuraDual:SetFrameStrata("BACKGROUND")
 TestAuraDual:SetFrameLevel(128)
 TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "BACKGROUND")
 TestAuraDual.texture:SetAllPoints(TestAuraDual)
+TestAuraDual.durationtext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+TestAuraDual.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+TestAuraDual.durationtext:SetPoint("CENTER", TestAuraDual, "CENTER", 0, 0)
+TestAuraDual.stackstext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+TestAuraDual.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
+TestAuraDual.stackstext:SetPoint("TOPLEFT", TestAuraDual.durationtext, "CENTER", 1, -6)
 TestAuraDual:Hide()
 sA.TestAuraDual = TestAuraDual
 
@@ -277,6 +289,8 @@ function sA:EditAura(id)
 		sA.TestAura:SetHeight(aura.size or 32)
 		sA.TestAura.texture:SetTexture(aura.texture)
 		sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor or {1, 1, 1, 1}))
+		if aura.duration == 1 then sA.TestAura.durationtext:SetText("600") else sA.TestAura.durationtext:SetText("") end
+		if aura.stacks == 1 then sA.TestAura.stackstext:SetText("20") else sA.TestAura.stackstext:SetText("") end
 		sA.TestAura:Show()
 		
 		if aura.dual == 1 then
@@ -286,6 +300,8 @@ function sA:EditAura(id)
 			sA.TestAuraDual.texture:SetTexture(aura.texture)
 			sA.TestAuraDual.texture:SetTexCoord(1, 0, 0, 1)
 			sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor or {1, 1, 1, 1}))
+			if aura.duration == 1 then sA.TestAuraDual.durationtext:SetText("600") else sA.TestAuraDual.durationtext:SetText("") end
+			if aura.stacks == 1 then sA.TestAuraDual.stackstext:SetText("20") else sA.TestAuraDual.stackstext:SetText("") end
 			sA.TestAuraDual:Show()
 		end
 	
