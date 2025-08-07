@@ -25,7 +25,7 @@ local function RefreshAuraList()
 		ListItem.text = ListItem:CreateFontString(nil, "ARTWORK", "GameFontWhite")
 		ListItem.text:SetPoint("LEFT", ListItem, "LEFT", 5, 0)
 		ListItem.text:SetText("["..id.."] "..(aura.name ~= "" and aura.name or "<unnamed>"))
-		ListItem.text:SetTextColor(unpack(aura.color or {1, 1, 1}))
+		ListItem.text:SetTextColor(unpack(aura.auracolor or {1, 1, 1}))
 		ListItem:SetScript("OnClick", function()
 			-- Close Testauras and Editor Window if already open
 			if gui.editor then
@@ -90,14 +90,19 @@ local function SaveAura(id)
 	
 	-- Save Values
 	simpleAuras.auras[id].name = gui.editor.name:GetText()
-	simpleAuras.auras[id].unit = gui.editor.unitButton.text:GetText()
-	simpleAuras.auras[id].type = gui.editor.typeButton.text:GetText()
-	simpleAuras.auras[id].color = gui.editor.color
+	simpleAuras.auras[id].auracolor = gui.editor.auracolor
 	simpleAuras.auras[id].autodetect = gui.editor.autoDetect.value
 	simpleAuras.auras[id].texture = gui.editor.texturePath:GetText()
 	simpleAuras.auras[id].size = gui.editor.size:GetText()
 	simpleAuras.auras[id].xpos = gui.editor.x:GetText()
 	simpleAuras.auras[id].ypos = gui.editor.y:GetText()
+	simpleAuras.auras[id].duration = gui.editor.duration.value
+	simpleAuras.auras[id].stacks = gui.editor.stacks.value
+	simpleAuras.auras[id].lowdurationvalue = tonumber(gui.editor.lowdurationvalue:GetText())
+	simpleAuras.auras[id].lowduration = gui.editor.lowduration.value
+	simpleAuras.auras[id].lowdurationcolor = gui.editor.lowdurationcolor
+	simpleAuras.auras[id].unit = gui.editor.unitButton.text:GetText()
+	simpleAuras.auras[id].type = gui.editor.typeButton.text:GetText()
 	simpleAuras.auras[id].invert = gui.editor.invert.value
 	simpleAuras.auras[id].dual = gui.editor.dual.value
 
@@ -107,6 +112,7 @@ local function SaveAura(id)
 	gui.editor.size:ClearFocus()
 	gui.editor.x:ClearFocus()
 	gui.editor.y:ClearFocus()
+	gui.editor.lowdurationvalue:ClearFocus()
 
 	-- Hide TestAuras
 	sA.TestAura:Hide()
@@ -180,6 +186,7 @@ end
 
 -- Create main GUI frame
 gui = CreateFrame("Frame", "sAGUI", UIParent)
+gui:SetFrameStrata("HIGH")
 local title = gui:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 title:SetPoint("TOP", gui, "TOP", 0, -5)
 title:SetText("simpleAuras")
@@ -269,7 +276,7 @@ function sA:EditAura(id)
 		sA.TestAura:SetWidth(aura.size or 32)
 		sA.TestAura:SetHeight(aura.size or 32)
 		sA.TestAura.texture:SetTexture(aura.texture)
-		sA.TestAura.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
+		sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor or {1, 1, 1, 1}))
 		sA.TestAura:Show()
 		
 		if aura.dual == 1 then
@@ -278,7 +285,7 @@ function sA:EditAura(id)
 			sA.TestAuraDual:SetHeight(aura.size or 32)
 			sA.TestAuraDual.texture:SetTexture(aura.texture)
 			sA.TestAuraDual.texture:SetTexCoord(1, 0, 0, 1)
-			sA.TestAuraDual.texture:SetVertexColor(unpack(aura.color or {1, 1, 1, 1}))
+			sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor or {1, 1, 1, 1}))
 			sA.TestAuraDual:Show()
 		end
 	
@@ -340,24 +347,24 @@ function sA:EditAura(id)
 
 
 
-		-- Color Picker with Alpha (from pfUI)
-		ed.colorpicker = CreateFrame("Button", nil, ed)
-		ed.colorpicker:SetWidth(24)
-		ed.colorpicker:SetHeight(12)
-		ed.colorpicker:SetPoint("LEFT", ed.texLabel, "RIGHT", 5, 0)
-		sA:SkinFrame(ed.colorpicker, {1, 1, 1, 1}) -- Use your existing skin function
+		-- Aura Color Picker with Alpha (from pfUI)
+		ed.auracolorpicker = CreateFrame("Button", nil, ed)
+		ed.auracolorpicker:SetWidth(24)
+		ed.auracolorpicker:SetHeight(12)
+		ed.auracolorpicker:SetPoint("LEFT", ed.texLabel, "RIGHT", 5, 0)
+		sA:SkinFrame(ed.auracolorpicker, {1, 1, 1, 1}) -- Use your existing skin function
 
 		-- Display current color
-		ed.colorpicker.prev = ed.colorpicker:CreateTexture(nil, "OVERLAY")
-		ed.colorpicker.prev:SetAllPoints(ed.colorpicker)
+		ed.auracolorpicker.prev = ed.auracolorpicker:CreateTexture(nil, "OVERLAY")
+		ed.auracolorpicker.prev:SetAllPoints(ed.auracolorpicker)
 
-		local cr, cg, cb, ca = unpack(simpleAuras.auras[id].color or {1, 1, 1, 1})
-		ed.colorpicker.prev:SetTexture(cr, cg, cb, ca)
-		ed.color = simpleAuras.auras[id].color
+		local cr, cg, cb, ca = unpack(simpleAuras.auras[id].auracolor or {1, 1, 1, 1})
+		ed.auracolorpicker.prev:SetTexture(cr, cg, cb, ca)
+		ed.auracolor = simpleAuras.auras[id].auracolor
 
-		ed.colorpicker:SetScript("OnClick", function()
+		ed.auracolorpicker:SetScript("OnClick", function()
 		  local preview = this.prev
-		  local r0, g0, b0, a0 = unpack(simpleAuras.auras[id].color or {1, 1, 1, 1})
+		  local r0, g0, b0, a0 = unpack(simpleAuras.auras[id].auracolor or {1, 1, 1, 1})
 
 		  -- Apply selected color
 		  function ColorPickerFrame.func()
@@ -378,8 +385,8 @@ function sA:EditAura(id)
 			gui.list[id].text:SetTextColor(r, g, b, a)
 
             if not this:GetParent():IsShown() then
-              simpleAuras.auras[id].color = {r, g, b, a}
-              ed.color = {r, g, b, a}
+              simpleAuras.auras[id].auracolor = {r, g, b, a}
+              ed.auracolor = {r, g, b, a}
             end
 			
 		  end
@@ -409,7 +416,7 @@ function sA:EditAura(id)
 		ed.autoDetect = CreateFrame("Button", nil, ed)
 		ed.autoDetect:SetWidth(16)
 		ed.autoDetect:SetHeight(16)
-		ed.autoDetect:SetPoint("LEFT", ed.colorpicker, "RIGHT", 73, 0)
+		ed.autoDetect:SetPoint("LEFT", ed.auracolorpicker, "RIGHT", 73, 0)
 		sA:SkinFrame(ed.autoDetect, {0.15, 0.15, 0.15, 1})
 
 		ed.autoDetect.checked = ed.autoDetect:CreateTexture(nil, "OVERLAY")
@@ -461,7 +468,7 @@ function sA:EditAura(id)
 		ed.texturePath:SetBackdropBorderColor(0, 0, 0, 1)
 		ed.texturePath:SetText(aura.texture or "")
 
-		-- Browse button (non-functional)
+		-- Browse button
 		ed.browseBtn = CreateFrame("Button", nil, ed)
 		ed.browseBtn:SetWidth(60)
 		ed.browseBtn:SetHeight(20)
@@ -471,6 +478,8 @@ function sA:EditAura(id)
 		ed.browseBtn.text:SetPoint("CENTER", ed.browseBtn, "CENTER", 0, 0)
 		ed.browseBtn.text:SetText("Browse")
 		ed.browseBtn:SetFontString(ed.browseBtn.text)
+		ed.browseBtn:SetScript("OnEnter", function() ed.browseBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+		ed.browseBtn:SetScript("OnLeave", function() ed.browseBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 		
 		
 		
@@ -482,6 +491,7 @@ function sA:EditAura(id)
 
 		  -- Create the overlay frame
 		  local bf = CreateFrame("Frame", nil, ed)
+		  bf:EnableMouse(true)
 		  bf:SetAllPoints(ed)
 		  bf:SetFrameStrata("DIALOG")
 		  sA:SkinFrame(bf)
@@ -502,6 +512,8 @@ function sA:EditAura(id)
 		  close.text:SetPoint("CENTER", close, "CENTER", 0.5, 1)
 		  close.text:SetText("x")
 		  close:SetFontString(close.text)
+		  close:SetScript("OnEnter", function() close:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+		  close:SetScript("OnLeave", function() close:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 		  close:SetScript("OnClick", function()
 			bf:Hide()
 		  end)
@@ -626,6 +638,8 @@ scrollbar:SetValue(0)
 		  select.text:SetPoint("CENTER", select, "CENTER", 0, 0)
 		  select.text:SetText("Select")
 		  select:SetFontString(select.text)
+		  select:SetScript("OnEnter", function() select:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+		  select:SetScript("OnLeave", function() select:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
 		  select:SetScript("OnClick", function()
 			if selectedTexture then
@@ -713,11 +727,216 @@ scrollbar:SetValue(0)
 		ed.y:SetBackdropBorderColor(0, 0, 0, 1)
 		ed.y:SetText(aura.ypos or 0)
 		
+		
+		
+		
+
+
+		-- Duration checkbox
+		ed.duration = CreateFrame("Button", nil, ed)
+		ed.duration:SetWidth(16)
+		ed.duration:SetHeight(16)
+		ed.duration:SetPoint("TOPLEFT", ed.sizeLabel, "BOTTOMLEFT", 0, -15)
+		sA:SkinFrame(ed.duration, {0.15, 0.15, 0.15, 1})
+		ed.duration.checked = ed.duration:CreateTexture(nil, "OVERLAY")
+		ed.duration.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+		ed.duration.checked:SetVertexColor(1, 0.8, 0.06, 1)
+		ed.duration.checked:SetPoint("CENTER", ed.duration, "CENTER", 0, 0)
+		ed.duration.checked:SetWidth(7)
+		ed.duration.checked:SetHeight(7)
+		ed.duration.checked:Hide()
+		ed.duration.value = aura.duration or 0
+		if ed.duration.value == 1 then
+			ed.duration.checked:Show()
+		end
+		ed.duration:SetScript("OnClick", function()
+			if ed.duration.value == 1 then
+				ed.duration.checked:Hide()
+				ed.duration.value = 0
+			else
+				ed.duration.checked:Show()
+				ed.duration.value = 1
+			end
+			simpleAuras.auras[id].duration = ed.duration.value
+			SaveAura(id)
+		end)
+		
+		-- Duration Label
+		ed.durationLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.durationLabel:SetPoint("LEFT", ed.duration, "RIGHT", 5, 0)
+		ed.durationLabel:SetText("Show Duration")
+
+		-- Stacks checkbox
+		ed.stacks = CreateFrame("Button", nil, ed)
+		ed.stacks:SetWidth(16)
+		ed.stacks:SetHeight(16)
+		ed.stacks:SetPoint("LEFT", ed.durationLabel, "RIGHT", 65, 0)
+		sA:SkinFrame(ed.stacks, {0.15, 0.15, 0.15, 1})
+		ed.stacks.checked = ed.stacks:CreateTexture(nil, "OVERLAY")
+		ed.stacks.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+		ed.stacks.checked:SetVertexColor(1, 0.8, 0.06, 1)
+		ed.stacks.checked:SetPoint("CENTER", ed.stacks, "CENTER", 0, 0)
+		ed.stacks.checked:SetWidth(7)
+		ed.stacks.checked:SetHeight(7)
+		ed.stacks.checked:Hide()
+		ed.stacks.value = aura.stacks or 0
+		if ed.stacks.value == 1 then
+			ed.stacks.checked:Show()
+		end
+		ed.stacks:SetScript("OnClick", function()
+			if ed.stacks.value == 1 then
+				ed.stacks.checked:Hide()
+				ed.stacks.value = 0
+			else
+				ed.stacks.checked:Show()
+				ed.stacks.value = 1
+			end
+			simpleAuras.auras[id].stacks = ed.stacks.value
+			SaveAura(id)
+		end)
+
+		-- Stacks Label
+		ed.stacksLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.stacksLabel:SetPoint("LEFT", ed.stacks, "RIGHT", 5, 0)
+		ed.stacksLabel:SetText("Show Stacks")
+		
+		
+		
+		
+		-- Low Duration checkbox
+		ed.lowduration = CreateFrame("Button", nil, ed)
+		ed.lowduration:SetWidth(16)
+		ed.lowduration:SetHeight(16)
+		ed.lowduration:SetPoint("TOPLEFT", ed.sizeLabel, "BOTTOMLEFT", 0, -40)
+		sA:SkinFrame(ed.lowduration, {0.15, 0.15, 0.15, 1})
+		ed.lowduration.checked = ed.lowduration:CreateTexture(nil, "OVERLAY")
+		ed.lowduration.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+		ed.lowduration.checked:SetVertexColor(1, 0.8, 0.06, 1)
+		ed.lowduration.checked:SetPoint("CENTER", ed.lowduration, "CENTER", 0, 0)
+		ed.lowduration.checked:SetWidth(7)
+		ed.lowduration.checked:SetHeight(7)
+		ed.lowduration.checked:Hide()
+		ed.lowduration.value = aura.lowduration or 0
+		if ed.lowduration.value == 1 then
+			ed.lowduration.checked:Show()
+		end
+		ed.lowduration:SetScript("OnClick", function()
+			if ed.lowduration.value == 1 then
+				ed.lowduration.checked:Hide()
+				ed.lowduration.value = 0
+			else
+				ed.lowduration.checked:Show()
+				ed.lowduration.value = 1
+			end
+			simpleAuras.auras[id].lowduration = ed.lowduration.value
+			SaveAura(id)
+		end)
+		
+		-- Low Duration Label
+		ed.lowdurationLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.lowdurationLabel:SetPoint("LEFT", ed.lowduration, "RIGHT", 5, 0)
+		ed.lowdurationLabel:SetText("Low Duration Color")
+		
+		-- Duration Color Picker with Alpha (from pfUI)
+		ed.lowdurationcolorpicker = CreateFrame("Button", nil, ed)
+		ed.lowdurationcolorpicker:SetWidth(24)
+		ed.lowdurationcolorpicker:SetHeight(12)
+		ed.lowdurationcolorpicker:SetPoint("LEFT", ed.lowdurationLabel, "RIGHT", 10, 0)
+		sA:SkinFrame(ed.lowdurationcolorpicker, {1, 1, 1, 1}) -- Use your existing skin function
+
+		-- Display current color
+		ed.lowdurationcolorpicker.prev = ed.lowdurationcolorpicker:CreateTexture(nil, "OVERLAY")
+		ed.lowdurationcolorpicker.prev:SetAllPoints(ed.lowdurationcolorpicker)
+
+		local cr, cg, cb, ca = unpack(simpleAuras.auras[id].lowdurationcolor or {1, 1, 1, 1})
+		ed.lowdurationcolorpicker.prev:SetTexture(cr, cg, cb, ca)
+		ed.lowdurationcolor = simpleAuras.auras[id].lowdurationcolor
+
+		ed.lowdurationcolorpicker:SetScript("OnClick", function()
+		  local preview = this.prev
+		  local r0, g0, b0, a0 = unpack(simpleAuras.auras[id].lowdurationcolor or {1, 1, 1, 1})
+
+		  -- Apply selected color
+		  function ColorPickerFrame.func()
+			local r, g, b = ColorPickerFrame:GetColorRGB()
+			local a = 1 - OpacitySliderFrame:GetValue()
+
+			r = math.floor(r * 100 + 0.5) / 100
+			g = math.floor(g * 100 + 0.5) / 100
+			b = math.floor(b * 100 + 0.5) / 100
+			a = math.floor(a * 100 + 0.5) / 100
+			
+			preview:SetTexture(r, g, b, a)
+
+			sA.TestAura.texture:SetVertexColor(r, g, b, a)
+			if simpleAuras.auras[id].dual == 1 then
+			  sA.TestAuraDual.texture:SetVertexColor(r, g, b, a)
+			end
+
+            if not this:GetParent():IsShown() then
+              simpleAuras.auras[id].lowdurationcolor = {r, g, b, a}
+              ed.lowdurationcolor = {r, g, b, a}
+            end
+			
+		  end
+
+		  -- Revert on cancel
+		  function ColorPickerFrame.cancelFunc()
+			preview:SetTexture(r0, g0, b0, a0)
+			sA.TestAura.texture:SetVertexColor(r0, g0, b0, a0)
+			if simpleAuras.auras[id].dual == 1 then
+			  sA.TestAuraDual.texture:SetVertexColor(r0, g0, b0, a0)
+			end
+		  end
+
+		  -- Configure and show the ColorPickerFrame
+		  ColorPickerFrame:SetColorRGB(r0, g0, b0)
+		  ColorPickerFrame.hasOpacity = true
+		  ColorPickerFrame.opacityFunc = ColorPickerFrame.func
+		  ColorPickerFrame.opacity = 1 - a0
+		  ColorPickerFrame:SetFrameStrata("DIALOG")
+		  ShowUIPanel(ColorPickerFrame)
+		end)
+		
+		
+		-- Low Duration label prefix
+		ed.lowdurationLabelprefix = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.lowdurationLabelprefix:SetPoint("LEFT", ed.lowdurationcolorpicker, "RIGHT", 20, 0)
+		ed.lowdurationLabelprefix:SetText("(<=")
+		
+		-- Low Duraiton value
+		ed.lowdurationvalue = CreateFrame("EditBox", nil, ed)
+		ed.lowdurationvalue:SetPoint("LEFT", ed.lowdurationLabelprefix, "RIGHT", 2, 0)
+		ed.lowdurationvalue:SetWidth(30)
+		ed.lowdurationvalue:SetHeight(20)
+		ed.lowdurationvalue:SetMultiLine(false)
+		ed.lowdurationvalue:SetAutoFocus(false)
+		ed.lowdurationvalue:SetFontObject(GameFontHighlightSmall)
+		ed.lowdurationvalue:SetTextColor(1, 1, 1)
+		ed.lowdurationvalue:SetMaxLetters(1)
+		ed.lowdurationvalue:SetJustifyH("CENTER")
+		ed.lowdurationvalue:SetBackdrop({
+			bgFile = "Interface\\Buttons\\WHITE8x8",
+			edgeFile = "Interface\\Buttons\\WHITE8x8",
+			edgeSize = 1,
+		})
+		ed.lowdurationvalue:SetBackdropColor(0.1, 0.1, 0.1, 1)
+		ed.lowdurationvalue:SetBackdropBorderColor(0, 0, 0, 1)
+		ed.lowdurationvalue:SetText(aura.lowdurationvalue or 3)
+		
+		
+		-- Low Duration label suffix
+		ed.lowdurationLabelsuffix = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.lowdurationLabelsuffix:SetPoint("LEFT", ed.lowdurationvalue, "RIGHT", 2, 0)
+		ed.lowdurationLabelsuffix:SetText("sec)")
+		
+		
+		
 		-- Separator
 		local linetwo = ed:CreateTexture(nil, "ARTWORK")
 		linetwo:SetTexture("Interface\\Buttons\\WHITE8x8")
 		linetwo:SetVertexColor(1, 0.8, 0.06, 1)
-		linetwo:SetPoint("TOPLEFT", ed.sizeLabel, "BOTTOMLEFT", 0, -15)
+		linetwo:SetPoint("TOPLEFT", ed.lowduration, "BOTTOMLEFT", 0, -15)
 		linetwo:SetWidth(275)
 		linetwo:SetHeight(1)
 
@@ -739,6 +958,8 @@ scrollbar:SetValue(0)
 		ed.unitButton.text = ed.unitButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		ed.unitButton.text:SetPoint("CENTER", ed.unitButton, "CENTER", 0, 0)
 		ed.unitButton.text:SetText(aura.unit or "Player")
+		ed.unitButton:SetScript("OnEnter", function() ed.unitButton:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+		ed.unitButton:SetScript("OnLeave", function() ed.unitButton:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
 		ed.unitButton:SetScript("OnClick", function()
 			if not ed.unitButton.menu then
@@ -760,11 +981,13 @@ scrollbar:SetValue(0)
 				b.text = b:CreateFontString(nil, "OVERLAY", "GameFontWhite")
 				b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
 				b.text:SetText(text)
-
+				b:SetScript("OnEnter", function() b:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+				b:SetScript("OnLeave", function() b:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 				b:SetScript("OnClick", function()
 				ed.unitButton.text:SetText(text)
 				aura.unit = text
 				menu:Hide()
+				SaveAura(id)
 				end)
 			end
 			makeChoice("Player", 1)
@@ -812,10 +1035,13 @@ scrollbar:SetValue(0)
 				b.text = b:CreateFontString(nil, "OVERLAY", "GameFontWhite")
 				b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
 				b.text:SetText(text)
+				b:SetScript("OnEnter", function() b:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+				b:SetScript("OnLeave", function() b:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 				b:SetScript("OnClick", function()
 					ed.typeButton.text:SetText(text)
 					aura.type = text
 					menu:Hide()
+					SaveAura(id)
 				end)
 			end
 				makeChoice("Buff", 1)
@@ -831,16 +1057,11 @@ scrollbar:SetValue(0)
 				
 		end)
 
-		-- Invert Label
-		ed.invertLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-		ed.invertLabel:SetPoint("BOTTOMLEFT", ed, "BOTTOMLEFT", 52.5, 30)
-		ed.invertLabel:SetText("Invert:")
-
 		-- Invert checkbox
 		ed.invert = CreateFrame("Button", nil, ed)
 		ed.invert:SetWidth(16)
 		ed.invert:SetHeight(16)
-		ed.invert:SetPoint("LEFT", ed.invertLabel, "RIGHT", 10, 0)
+		ed.invert:SetPoint("BOTTOMLEFT", ed, "BOTTOMLEFT", 52.5, 30)
 		sA:SkinFrame(ed.invert, {0.15, 0.15, 0.15, 1})
 		ed.invert.checked = ed.invert:CreateTexture(nil, "OVERLAY")
 		ed.invert.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
@@ -865,16 +1086,16 @@ scrollbar:SetValue(0)
 			SaveAura(id)
 		end)
 
-		-- Dual Label
-		ed.dualLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-		ed.dualLabel:SetPoint("LEFT", ed.invertLabel, "RIGHT", 90, 0)
-		ed.dualLabel:SetText("Dual:")
+		-- Invert Label
+		ed.invertLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.invertLabel:SetPoint("LEFT", ed.invert, "RIGHT", 5, 0)
+		ed.invertLabel:SetText("Invert")
 
 		-- Dual checkbox
 		ed.dual = CreateFrame("Button", nil, ed)
 		ed.dual:SetWidth(16)
 		ed.dual:SetHeight(16)
-		ed.dual:SetPoint("LEFT", ed.dualLabel, "RIGHT", 10, 0)
+		ed.dual:SetPoint("LEFT", ed.invertLabel, "RIGHT", 90, 0)
 		sA:SkinFrame(ed.dual, {0.15, 0.15, 0.15, 1})
 		ed.dual.checked = ed.dual:CreateTexture(nil, "OVERLAY")
 		ed.dual.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
@@ -898,6 +1119,11 @@ scrollbar:SetValue(0)
 			simpleAuras.auras[id].dual = ed.dual.value
 			SaveAura(id)
 		end)
+
+		-- Dual Label
+		ed.dualLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.dualLabel:SetPoint("LEFT", ed.dual, "RIGHT", 5, 0)
+		ed.dualLabel:SetText("Dual")
 		
 		---- Separator
 		--local linetwo = ed:CreateTexture(nil, "ARTWORK")
@@ -990,6 +1216,7 @@ scrollbar:SetValue(0)
 	ed.delete:SetScript("OnClick", function()
 		if ed.confirm then ed.confirm:Show() return end
 		ed.confirm = CreateFrame("Frame", nil, ed)
+		ed.confirm:EnableMouse(true)
 		ed.confirm:SetFrameStrata("DIALOG")
 		ed.confirm:SetFrameLevel(10)
 		ed.confirm:SetPoint("CENTER", ed, "CENTER", 0, 0)
@@ -1051,6 +1278,7 @@ scrollbar:SetValue(0)
 	ed.size:SetScript("OnEnterPressed", function() SaveAura(id) end)
 	ed.x:SetScript("OnEnterPressed", function() SaveAura(id) end)
 	ed.y:SetScript("OnEnterPressed", function() SaveAura(id) end)
+	ed.lowdurationvalue:SetScript("OnEnterPressed", function() SaveAura(id) end)
 	ed.save:SetScript("OnClick", function() SaveAura(id) end)
 
 	ed:Show()
