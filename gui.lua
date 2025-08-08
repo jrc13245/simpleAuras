@@ -867,7 +867,7 @@ function sA:EditAura(id)
     for i = 1, total do
       local btn = CreateFrame("Button", nil, content)
       local row = math.floor((i - 1) / numPerRow)
-      local col = (i - 1) % numPerRow
+      local col = math.mod(i - 1, numPerRow)
       btn:SetWidth(size)
       btn:SetHeight(size)
       btn:SetPoint("TOPLEFT", col * (size + padding) + 22, -row * (size + padding))
@@ -906,3 +906,4 @@ end
 
 -- Init
 RefreshAuraList()
+
