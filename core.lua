@@ -54,8 +54,7 @@ function sA:GetAuraInfo(unit, index, auraType)
   end
 
   name = sAScannerTextLeft1:GetText()
-  local rounded = math.floor(duration + 1 - (1 / simpleAuras.refresh))
-  return name, icon, rounded, stacks
+  return name, icon, duration, stacks
 end
 
 -- Create aura display frame
@@ -66,7 +65,7 @@ local function CreateAuraFrame(id)
   f.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
   f.durationtext:SetPoint("CENTER", f, "CENTER", 0, 0)
   f.stackstext = f:CreateFontString(nil, "OVERLAY", "GameFontWhite")
-  f.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
+  f.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
   f.stackstext:SetPoint("TOPLEFT", f.durationtext, "CENTER", 1, -6)
   f.texture = f:CreateTexture(nil, "BACKGROUND")
   f.texture:SetAllPoints(f)
@@ -91,7 +90,8 @@ function sA:UpdateAuras()
   end
 
   for id, aura in ipairs(simpleAuras.auras) do
-    local currentDuration, currentStacks, show = nil, nil, 0
+  
+    local currentDuration, currentStacks, show = 600, 20, 0
 
     if aura.name ~= "" then
       local i = 1
@@ -120,37 +120,54 @@ function sA:UpdateAuras()
         and (aura.lowdurationcolor or {1, 0, 0, 1})
         or  (aura.auracolor        or {1, 1, 1, 1})
 	
-      if currentDuration and currentDuration > 100 then currentDurationtext = math.floor(currentDuration/60+0.5).."m" else currentDurationtext = currentDuration end
+      if currentDuration and currentDuration > 100 then
+        currentDurationtext = math.floor(currentDuration/60+0.5).."m"
+	  else
+		if currentDuration and ((aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue) or (aura.lowduration ~= 1 and currentDuration <= 5)) then
+          currentDurationtext = string.format("%.1f", math.floor(currentDuration*10+0.5)/10)
+		else
+          currentDurationtext = math.floor(currentDuration+0.5)
+		end
+	  end
 	  
 	  frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
       frame:SetFrameLevel(128 - id)
-      frame:SetWidth(aura.size or 32)
-      frame:SetHeight(aura.size or 32)
+      frame:SetWidth(48*(aura.scale or 1))
+      frame:SetHeight(48*(aura.scale or 1))
       frame.texture:SetTexture(aura.texture)
       frame.texture:SetVertexColor(unpack(color))
       frame.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDurationtext or "")
       frame.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
+      if aura.duration == 1 then frame.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") end
+      if aura.stacks == 1 then frame.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") end
 	  
-	  local durationcolor = {1.0, 0.82, 0.0, 1.0}
+	  local _, _, _, durationalpha = unpack(aura.auracolor)
+	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
+	  local stackcolor = {1, 1, 1, durationalpha}
 	  if aura.unit == "Player" and aura.duration == 1
-        and ((aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue)
-        or (aura.lowduration ~= 1 and currentDuration <= 3)) then
-          durationcolor = {1, 0, 0, 1}
+        and ((currentDuration and aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue)
+        or (aura.lowduration ~= 1 and currentDuration <= 5)) then
+          local _, _, _, durationalpha = unpack(aura.auracolor)
+          durationcolor = {1, 0, 0, durationalpha}
+          stackcolor = {1, 1, 1, durationalpha}
 	  end
 
 	  frame.durationtext:SetTextColor(unpack(durationcolor))
+	  frame.stackstext:SetTextColor(unpack(stackcolor))
 
       frame:Show()
 
       if aura.dual == 1 then
         dualframe:SetPoint("CENTER", UIParent, "CENTER", (-1 * (aura.xpos or 0)), aura.ypos or 0)
         dualframe:SetFrameLevel(128 - id)
-        dualframe:SetWidth(aura.size or 32)
-        dualframe:SetHeight(aura.size or 32)
+        dualframe:SetWidth(48*(aura.scale or 1))
+        dualframe:SetHeight(48*(aura.scale or 1))
         dualframe.texture:SetTexture(aura.texture)
         dualframe.texture:SetVertexColor(unpack(color))
         dualframe.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDurationtext or "")
         dualframe.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
+        if aura.duration == 1 then dualframe.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") end
+        if aura.stacks == 1 then dualframe.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") end
         dualframe.durationtext:SetTextColor(unpack(durationcolor))
         dualframe:Show()
       elseif dualframe then
