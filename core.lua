@@ -1,5 +1,3 @@
--- core.lua (cleaned version)
-
 -- Globals & defaults
 simpleAuras = simpleAuras or {}
 sA = { frames = {}, dualframes = {} }
@@ -23,7 +21,7 @@ function sA:SkinFrame(frame, bg, border)
   frame:SetBackdropBorderColor(unpack(border or {0, 0, 0, 1}))
 end
 
--- Get aura info (1.12 compatible)
+-- Get aura info
 function sA:GetAuraInfo(unit, index, auraType)
   local name, icon, duration, stacks
 
@@ -66,7 +64,7 @@ local function CreateAuraFrame(id)
   f:SetFrameStrata("BACKGROUND")
   f.durationtext = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   f.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-  f.durationtext:SetPoint("CENTER")
+  f.durationtext:SetPoint("CENTER", f, "CENTER", 0, 0)
   f.stackstext = f:CreateFontString(nil, "OVERLAY", "GameFontWhite")
   f.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
   f.stackstext:SetPoint("TOPLEFT", f.durationtext, "CENTER", 1, -6)
@@ -79,7 +77,7 @@ end
 local function CreateDualFrame(id)
   local f = CreateAuraFrame(id)
   f.texture:SetTexCoord(1, 0, 0, 1)
-  f.durationtext:SetPoint("CENTER")
+  f.durationtext:SetPoint("CENTER", f, "CENTER", 0, 0)
   f.stackstext:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -2, 2)
   return f
 end
@@ -121,15 +119,27 @@ function sA:UpdateAuras()
       local color = (aura.lowduration == 1 and currentDuration and currentDuration <= aura.lowdurationvalue)
         and (aura.lowdurationcolor or {1, 0, 0, 1})
         or  (aura.auracolor        or {1, 1, 1, 1})
-
-      frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
+	
+      if currentDuration and currentDuration > 100 then currentDurationtext = math.floor(currentDuration/60+0.5).."m" else currentDurationtext = currentDuration end
+	  
+	  frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
       frame:SetFrameLevel(128 - id)
       frame:SetWidth(aura.size or 32)
       frame:SetHeight(aura.size or 32)
       frame.texture:SetTexture(aura.texture)
       frame.texture:SetVertexColor(unpack(color))
-      frame.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDuration or "")
+      frame.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDurationtext or "")
       frame.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
+	  
+	  local durationcolor = {1.0, 0.82, 0.0, 1.0}
+	  if aura.unit == "Player" and aura.duration == 1
+        and ((aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue)
+        or (aura.lowduration ~= 1 and currentDuration <= 3)) then
+          durationcolor = {1, 0, 0, 1}
+	  end
+
+	  frame.durationtext:SetTextColor(unpack(durationcolor))
+
       frame:Show()
 
       if aura.dual == 1 then
@@ -139,8 +149,9 @@ function sA:UpdateAuras()
         dualframe:SetHeight(aura.size or 32)
         dualframe.texture:SetTexture(aura.texture)
         dualframe.texture:SetVertexColor(unpack(color))
-        dualframe.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDuration or "")
+        dualframe.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDurationtext or "")
         dualframe.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
+        dualframe.durationtext:SetTextColor(unpack(durationcolor))
         dualframe:Show()
       elseif dualframe then
         dualframe:Hide()
