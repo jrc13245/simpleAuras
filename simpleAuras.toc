@@ -1,9 +1,8 @@
 ## Interface: 11200
 ## Title: |cff33ffccsimple|cffffffffAuras
-## Notes: Show Auras depending on conditions set.
-## Version: 0.2
+## Notes: Simple Aura Display.
+## Version: 0.3
 ## Author: yani9o
 ## SavedVariablesPerCharacter: simpleAuras
 core.lua
 gui.lua
-
