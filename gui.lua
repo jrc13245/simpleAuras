@@ -17,7 +17,7 @@ TestAura.durationtext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontNorma
 TestAura.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 TestAura.durationtext:SetPoint("CENTER", TestAura, "CENTER", 0, 0)
 TestAura.stackstext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontWhite")
-TestAura.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
+TestAura.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
 TestAura.stackstext:SetPoint("TOPLEFT", TestAura.durationtext, "CENTER", 1, -6)
 TestAura:Hide()
 sA.TestAura = TestAura
@@ -31,7 +31,7 @@ TestAuraDual.durationtext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameF
 TestAuraDual.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 TestAuraDual.durationtext:SetPoint("CENTER", TestAuraDual, "CENTER", 0, 0)
 TestAuraDual.stackstext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontWhite")
-TestAuraDual.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 8, "OUTLINE")
+TestAuraDual.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
 TestAuraDual.stackstext:SetPoint("TOPLEFT", TestAuraDual.durationtext, "CENTER", 1, -6)
 TestAuraDual:Hide()
 sA.TestAuraDual = TestAuraDual
@@ -138,6 +138,13 @@ function RefreshAuraList()
       up:SetScript("OnClick", function()
         simpleAuras.auras[id], simpleAuras.auras[id-1] = simpleAuras.auras[id-1], simpleAuras.auras[id]
         RefreshAuraList()
+		if gui.editor then
+          if sA.TestAura then sA.TestAura:Hide() end
+          if sA.TestAuraDual then sA.TestAuraDual:Hide() end
+          gui.editor:Hide()
+          gui.editor = nil
+		  sA:EditAura(id-1)
+        end
       end)
     end
 
@@ -157,6 +164,13 @@ function RefreshAuraList()
       down:SetScript("OnClick", function()
         simpleAuras.auras[id], simpleAuras.auras[id+1] = simpleAuras.auras[id+1], simpleAuras.auras[id]
         RefreshAuraList()
+		if gui.editor then
+          if sA.TestAura then sA.TestAura:Hide() end
+          if sA.TestAuraDual then sA.TestAuraDual:Hide() end
+          gui.editor:Hide()
+          gui.editor = nil
+		  sA:EditAura(id+1)
+        end
       end)
     end
 
@@ -173,7 +187,7 @@ function SaveAura(id)
   data.auracolor       = ed.auracolor
   data.autodetect      = ed.autoDetect.value
   data.texture         = ed.texturePath:GetText()
-  data.size            = tonumber(ed.size:GetText()) or ed.size:GetText()
+  data.scale            = tonumber(ed.scale:GetText()) or ed.scale:GetText()
   data.xpos            = tonumber(ed.x:GetText()) or ed.x:GetText()
   data.ypos            = tonumber(ed.y:GetText()) or ed.y:GetText()
   data.duration        = ed.duration.value
@@ -188,7 +202,7 @@ function SaveAura(id)
 
   ed.name:ClearFocus()
   ed.texturePath:ClearFocus()
-  ed.size:ClearFocus()
+  ed.scale:ClearFocus()
   ed.x:ClearFocus()
   ed.y:ClearFocus()
   ed.lowdurationvalue:ClearFocus()
@@ -333,26 +347,26 @@ function sA:EditAura(id)
     ed.browseBtn:SetScript("OnEnter", function() ed.browseBtn:SetBackdropColor(0.5,0.5,0.5,1) end)
     ed.browseBtn:SetScript("OnLeave", function() ed.browseBtn:SetBackdropColor(0.2,0.2,0.2,1) end)
 
-    -- Size / position inputs
-    ed.sizeLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    ed.sizeLabel:SetPoint("TOPLEFT", ed.texturePath, "TOPLEFT", 0, -30)
-    ed.sizeLabel:SetText("Size:")
-    ed.size = CreateFrame("EditBox", nil, ed)
-    ed.size:SetPoint("LEFT", ed.sizeLabel, "RIGHT", 5, 0)
-    ed.size:SetWidth(30)
-    ed.size:SetHeight(20)
-	ed.size:SetJustifyH("CENTER")
-    ed.size:SetMultiLine(false)
-    ed.size:SetAutoFocus(false)
-    ed.size:SetFontObject(GameFontHighlightSmall)
-    ed.size:SetTextColor(1,1,1)
-    ed.size:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-    ed.size:SetBackdropColor(0.1,0.1,0.1,1)
-    ed.size:SetBackdropBorderColor(0,0,0,1)
-    ed.size:SetScript("OnEnterPressed", function() SaveAura(id) end)
+    -- Scale / position inputs
+    ed.scaleLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.scaleLabel:SetPoint("TOPLEFT", ed.texturePath, "TOPLEFT", 0, -30)
+    ed.scaleLabel:SetText("Scale:")
+    ed.scale = CreateFrame("EditBox", nil, ed)
+    ed.scale:SetPoint("LEFT", ed.scaleLabel, "RIGHT", 5, 0)
+    ed.scale:SetWidth(30)
+    ed.scale:SetHeight(20)
+	ed.scale:SetJustifyH("CENTER")
+    ed.scale:SetMultiLine(false)
+    ed.scale:SetAutoFocus(false)
+    ed.scale:SetFontObject(GameFontHighlightSmall)
+    ed.scale:SetTextColor(1,1,1)
+    ed.scale:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    ed.scale:SetBackdropColor(0.1,0.1,0.1,1)
+    ed.scale:SetBackdropBorderColor(0,0,0,1)
+    ed.scale:SetScript("OnEnterPressed", function() SaveAura(id) end)
 
     ed.xLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    ed.xLabel:SetPoint("LEFT", ed.size, "RIGHT", 35, 0)
+    ed.xLabel:SetPoint("LEFT", ed.scale, "RIGHT", 35, 0)
     ed.xLabel:SetText("x pos:")
     ed.x = CreateFrame("EditBox", nil, ed)
     ed.x:SetPoint("LEFT", ed.xLabel, "RIGHT", 5, 0)
@@ -389,7 +403,7 @@ function sA:EditAura(id)
     ed.duration = CreateFrame("Button", nil, ed)
     ed.duration:SetWidth(16)
     ed.duration:SetHeight(16)
-    ed.duration:SetPoint("TOPLEFT", ed.sizeLabel, "BOTTOMLEFT", 0, -15)
+    ed.duration:SetPoint("TOPLEFT", ed.scaleLabel, "BOTTOMLEFT", 0, -15)
     sA:SkinFrame(ed.duration, {0.15,0.15,0.15,1})
     ed.duration:SetScript("OnEnter", function() ed.duration:SetBackdropColor(0.5,0.5,0.5,1) end)
     ed.duration:SetScript("OnLeave", function() ed.duration:SetBackdropColor(0.2,0.2,0.2,1) end)
@@ -436,7 +450,7 @@ function sA:EditAura(id)
     ed.lowduration = CreateFrame("Button", nil, ed)
     ed.lowduration:SetWidth(16)
     ed.lowduration:SetHeight(16)
-    ed.lowduration:SetPoint("TOPLEFT", ed.sizeLabel, "BOTTOMLEFT", 0, -40)
+    ed.lowduration:SetPoint("TOPLEFT", ed.scaleLabel, "BOTTOMLEFT", 0, -40)
     sA:SkinFrame(ed.lowduration, {0.15,0.15,0.15,1})
     ed.lowduration:SetScript("OnEnter", function() ed.lowduration:SetBackdropColor(0.5,0.5,0.5,1) end)
     ed.lowduration:SetScript("OnLeave", function() ed.lowduration:SetBackdropColor(0.2,0.2,0.2,1) end)
@@ -692,7 +706,7 @@ function sA:EditAura(id)
   if ed.autoDetect.value == 1 then ed.autoDetect.checked:Show() else ed.autoDetect.checked:Hide() end
 
   ed.texturePath:SetText(aura.texture or "")
-  ed.size:SetText(aura.size or 32)
+  ed.scale:SetText(aura.scale or 1)
   ed.x:SetText(aura.xpos or 0)
   ed.y:SetText(aura.ypos or 0)
 
@@ -704,7 +718,7 @@ function sA:EditAura(id)
 
   ed.lowduration.value = aura.lowduration or 0
   if ed.lowduration.value == 1 then ed.lowduration.checked:Show() else ed.lowduration.checked:Hide() end
-  ed.lowdurationvalue:SetText(aura.lowdurationvalue or 3)
+  ed.lowdurationvalue:SetText(aura.lowdurationvalue or 5)
   ed.lowdurationcolor = aura.lowdurationcolor or {1,1,1,1}
   ed.lowdurationcolorpicker.prev:SetTexture(unpack(ed.lowdurationcolor))
 
@@ -717,23 +731,40 @@ function sA:EditAura(id)
 
   -- Show Test aura(s)
   sA.TestAura:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
-  sA.TestAura:SetWidth(aura.size or 32)
-  sA.TestAura:SetHeight(aura.size or 32)
+  sA.TestAura:SetWidth(48*(aura.scale or 1))
+  sA.TestAura:SetHeight(48*(aura.scale or 1))
   sA.TestAura.texture:SetTexture(aura.texture)
   sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor or {1,1,1,1}))
-  if aura.duration == 1 then sA.TestAura.durationtext:SetText("600") else sA.TestAura.durationtext:SetText("") end
-  if aura.stacks == 1 then sA.TestAura.stackstext:SetText("20") else sA.TestAura.stackstext:SetText("") end
+  if aura.duration == 1 then sA.TestAura.durationtext:SetText("60") sA.TestAura.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") else sA.TestAura.durationtext:SetText("") end
+  if aura.stacks == 1 then sA.TestAura.stackstext:SetText("20") sA.TestAura.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") else sA.TestAura.stackstext:SetText("") end
+	  
+	  local _, _, _, durationalpha = unpack(aura.auracolor)
+	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
+	  local stackcolor = {1, 1, 1, durationalpha}
+	  if aura.unit == "Player" and aura.duration == 1
+        and ((currentDuration and aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue)
+        or (aura.lowduration ~= 1 and currentDuration <= 5)) then
+          local _, _, _, durationalpha = unpack(aura.auracolor)
+          durationcolor = {1, 0, 0, durationalpha}
+          stackcolor = {1, 1, 1, durationalpha}
+	  end
+
+	  sA.TestAura.durationtext:SetTextColor(unpack(durationcolor))
+	  sA.TestAura.stackstext:SetTextColor(unpack(stackcolor))
+	  sA.TestAuraDual.durationtext:SetTextColor(unpack(durationcolor))
+	  sA.TestAuraDual.stackstext:SetTextColor(unpack(stackcolor))
+	  
   sA.TestAura:Show()
   
   if aura.dual == 1 then
     sA.TestAuraDual:SetPoint("CENTER", UIParent, "CENTER", -(aura.xpos or 0), aura.ypos or 0)
-    sA.TestAuraDual:SetWidth(aura.size or 32)
-    sA.TestAuraDual:SetHeight(aura.size or 32)
+    sA.TestAuraDual:SetWidth(48*(aura.scale or 1))
+    sA.TestAuraDual:SetHeight(48*(aura.scale or 1))
     sA.TestAuraDual.texture:SetTexture(aura.texture)
     sA.TestAuraDual.texture:SetTexCoord(1,0,0,1)
     sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor or {1,1,1,1}))
-    if aura.duration == 1 then sA.TestAuraDual.durationtext:SetText("600") else sA.TestAuraDual.durationtext:SetText("") end
-    if aura.stacks == 1 then sA.TestAuraDual.stackstext:SetText("20") else sA.TestAuraDual.stackstext:SetText("") end
+    if aura.duration == 1 then sA.TestAuraDual.durationtext:SetText("60") sA.TestAuraDual.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") else sA.TestAuraDual.durationtext:SetText("") end
+    if aura.stacks == 1 then sA.TestAuraDual.stackstext:SetText("20") sA.TestAuraDual.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") else sA.TestAuraDual.stackstext:SetText("") end
     sA.TestAuraDual:Show()
   else
     sA.TestAuraDual:Hide()
@@ -842,11 +873,15 @@ function sA:EditAura(id)
 	  if not this:GetParent():IsShown() then
         simpleAuras.auras[id].lowdurationcolor = {r, g, b, a}
         ed.lowdurationcolor = {r, g, b, a}
+        sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor))
+        if simpleAuras.auras[id] and simpleAuras.auras[id].dual == 1 then sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor)) end
 	  end
     end
     ColorPickerFrame.cancelFunc = function()
       ed.lowdurationcolor = {r0,g0,b0,a0}
       ed.lowdurationcolorpicker.prev:SetTexture(r0,g0,b0,a0)
+      sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor))
+      if simpleAuras.auras[id] and simpleAuras.auras[id].dual == 1 then sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor)) end
     end
     ColorPickerFrame:SetColorRGB(r0,g0,b0)
     ColorPickerFrame.hasOpacity = true
@@ -1026,11 +1061,11 @@ SlashCmdList["sA"] = function(msg)
 	-- refresh command
 	if cmd == "refresh" then
 		local num = tonumber(val)
-		if num and num >= 1 and num <= 10 then
+		if num and num >= 1 and num <= 100 then
 			simpleAuras.refresh = num
 			DEFAULT_CHAT_FRAME:AddMessage("refresh set to " .. num .. " times per second")
 		else
-			DEFAULT_CHAT_FRAME:AddMessage("Usage: /sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
+			DEFAULT_CHAT_FRAME:AddMessage("Usage: /sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 5)")
 			DEFAULT_CHAT_FRAME:AddMessage("Current refresh = " .. tostring(simpleAuras.refresh) .. " times per second")
 		end
 		return
@@ -1039,6 +1074,6 @@ SlashCmdList["sA"] = function(msg)
 	-- Unknown command fallback
 	DEFAULT_CHAT_FRAME:AddMessage("Usage:")
 	DEFAULT_CHAT_FRAME:AddMessage("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
-	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
+	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 5)")
 
 end
