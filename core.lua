@@ -54,6 +54,12 @@ function sA:GetAuraInfo(unit, index, auraType)
   end
 
   name = sAScannerTextLeft1:GetText()
+  if unit ~= "Player" and (not duration or duration == 0) and name then
+	CleveRoids.ValidateUnitDebuff(unit,name)
+	if remaining_aura_duration then
+		duration = remaining_aura_duration
+	end
+  end
   return name, icon, duration, stacks
 end
 
@@ -100,6 +106,7 @@ function sA:UpdateAuras()
         if not name then break end
         if name == aura.name then
           show, currentDuration, currentStacks = 1, duration, stacks
+		  if name == "Holy Fire" then print(name..":"..currentDuration) end
           if aura.autodetect == 1 then
             aura.texture = icon
             simpleAuras.auras[id].texture = icon
@@ -136,7 +143,7 @@ function sA:UpdateAuras()
       frame:SetHeight(48*(aura.scale or 1))
       frame.texture:SetTexture(aura.texture)
       frame.texture:SetVertexColor(unpack(color))
-      frame.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDurationtext or "")
+      frame.durationtext:SetText((aura.duration == 1) and currentDurationtext or "")
       frame.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
       if aura.duration == 1 then frame.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") end
       if aura.stacks == 1 then frame.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") end
@@ -144,7 +151,7 @@ function sA:UpdateAuras()
 	  local _, _, _, durationalpha = unpack(aura.auracolor or {1,1,1,1})
 	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
 	  local stackcolor = {1, 1, 1, durationalpha}
-	  if aura.unit == "Player" and aura.duration == 1
+	  if aura.duration == 1
         and ((currentDuration and aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue)
         or (aura.lowduration ~= 1 and currentDuration <= 5)) then
           local _, _, _, durationalpha = unpack(aura.auracolor)
@@ -180,6 +187,121 @@ function sA:UpdateAuras()
   end
 end
 
+local debuffTimers = {}     -- [unit][debuffName] = { startTime = x }
+local debuffDurations = {}  -- [debuffName] = learned duration
+
+-- Scan current debuffs on a unit, update timers and learn durations
+local function ScanDebuffs(unit)
+    if not debuffTimers[unit] then debuffTimers[unit] = {} end
+
+    local seen = {}
+
+    for i = 1, 16 do
+        local texture = UnitDebuff(unit, i)
+        if not texture then break end
+
+        GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+        GameTooltip:SetUnitDebuff(unit, i)
+        local debuffName = GameTooltipTextLeft1:GetText()
+
+        if debuffName then
+            seen[debuffName] = true
+            local currentTime = GetTime()
+
+            if not debuffTimers[unit][debuffName] then
+                -- New debuff: track start time
+				if not debuffDurations[debuffName] then
+					DEFAULT_CHAT_FRAME:AddMessage(
+						string.format("Start Learning duration: %s", debuffName)
+					)
+				end
+                debuffTimers[unit][debuffName] = { startTime = currentTime }
+            else
+                -- Debuff is already tracked: check if reapply happened
+                -- If elapsed time since startTime is more than 0.1 sec, do nothing
+                -- But if elapsed time is very small (refresh), reset timer
+                local elapsed = currentTime - debuffTimers[unit][debuffName].startTime
+                if elapsed < 0.1 then
+                    debuffTimers[unit][debuffName].startTime = currentTime
+                    -- Optional: print debug message
+                    -- DEFAULT_CHAT_FRAME:AddMessage("Debuff reapplied: "..debuffName)
+                end
+            end
+        end
+    end
+
+    -- Check for removed debuffs and learn durations (same as before)
+    for debuffName, data in pairs(debuffTimers[unit]) do
+        if not seen[debuffName] then
+            local duration = GetTime() - data.startTime
+            if duration > 0 then
+                if not debuffDurations[debuffName] then
+                    debuffDurations[debuffName] = math.floor(duration+0.5)
+					DEFAULT_CHAT_FRAME:AddMessage(
+						string.format("Learned duration: %s = %.1f sec", debuffName, debuffDurations[debuffName])
+					)
+                end
+            end
+            debuffTimers[unit][debuffName] = nil
+        end
+    end
+end
+
+
+-- Return remaining debuff time on unit
+function GetRemainingDebuffTime(unit, debuffName)
+    if debuffTimers[unit] and debuffTimers[unit][debuffName] and debuffDurations[debuffName] then
+        local startTime = debuffTimers[unit][debuffName].startTime
+        local duration = debuffDurations[debuffName]
+        local remaining = (startTime + duration) - GetTime()
+        return math.max(0, remaining)
+    end
+    return 0
+end
+
+local function PrintTargetDebuffs()
+	
+    local unit = "target"
+    if not UnitExists(unit) then
+        print("No target selected.")
+        return
+    end
+
+    if not debuffTimers[unit] then
+        print("No debuffs tracked on target.")
+        return
+    end
+	
+	if debuffTimers[unit] then
+		for debuffName, data in pairs(debuffTimers[unit]) do
+			local remaining = GetRemainingDebuffTime(unit, debuffName)
+			if remaining > 0 then
+				print(string.format("- %s: %.1f seconds remaining", debuffName, remaining))
+			end
+		end
+	end
+end
+
+
+-- Create frame for events and OnUpdate scanning
+local f = CreateFrame("Frame")
+
+-- Also scan immediately when target changes or unit aura changes
+f:RegisterEvent("PLAYER_TARGET_CHANGED")
+f:RegisterEvent("UNIT_AURA")
+f:SetScript("OnEvent", function(self, event, unit)
+    if event == "PLAYER_TARGET_CHANGED" then
+        if UnitExists("target") then
+            ScanDebuffs("target")
+        else
+            debuffTimers["target"] = nil
+        end
+    elseif event == "UNIT_AURA" and unit == "target" then
+        ScanDebuffs(unit)
+    end
+end)
+
+
 -- Event frame for timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", sAParent)
 sAEvent:SetScript("OnUpdate", function()
@@ -189,4 +311,3 @@ sAEvent:SetScript("OnUpdate", function()
   sAEvent.lastUpdate = time
   sA:UpdateAuras()
 end)
-
