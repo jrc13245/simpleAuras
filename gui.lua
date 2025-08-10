@@ -738,16 +738,9 @@ function sA:EditAura(id)
   if aura.duration == 1 then sA.TestAura.durationtext:SetText("60") sA.TestAura.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") else sA.TestAura.durationtext:SetText("") end
   if aura.stacks == 1 then sA.TestAura.stackstext:SetText("20") sA.TestAura.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") else sA.TestAura.stackstext:SetText("") end
 	  
-	  local _, _, _, durationalpha = unpack(aura.auracolor)
+	  local _, _, _, durationalpha = unpack(aura.auracolor or {1,1,1,1})
 	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
 	  local stackcolor = {1, 1, 1, durationalpha}
-	  if aura.unit == "Player" and aura.duration == 1
-        and ((currentDuration and aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue)
-        or (aura.lowduration ~= 1 and currentDuration <= 5)) then
-          local _, _, _, durationalpha = unpack(aura.auracolor)
-          durationcolor = {1, 0, 0, durationalpha}
-          stackcolor = {1, 1, 1, durationalpha}
-	  end
 
 	  sA.TestAura.durationtext:SetTextColor(unpack(durationcolor))
 	  sA.TestAura.stackstext:SetTextColor(unpack(stackcolor))
@@ -1077,3 +1070,4 @@ SlashCmdList["sA"] = function(msg)
 	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 5)")
 
 end
+

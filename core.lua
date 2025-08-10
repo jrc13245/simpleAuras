@@ -141,7 +141,7 @@ function sA:UpdateAuras()
       if aura.duration == 1 then frame.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") end
       if aura.stacks == 1 then frame.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") end
 	  
-	  local _, _, _, durationalpha = unpack(aura.auracolor)
+	  local _, _, _, durationalpha = unpack(aura.auracolor or {1,1,1,1})
 	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
 	  local stackcolor = {1, 1, 1, durationalpha}
 	  if aura.unit == "Player" and aura.duration == 1
@@ -189,3 +189,4 @@ sAEvent:SetScript("OnUpdate", function()
   sAEvent.lastUpdate = time
   sA:UpdateAuras()
 end)
+
