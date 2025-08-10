@@ -719,7 +719,7 @@ function sA:EditAura(id)
   ed.lowduration.value = aura.lowduration or 0
   if ed.lowduration.value == 1 then ed.lowduration.checked:Show() else ed.lowduration.checked:Hide() end
   ed.lowdurationvalue:SetText(aura.lowdurationvalue or 5)
-  ed.lowdurationcolor = aura.lowdurationcolor or {1,1,1,1}
+  ed.lowdurationcolor = aura.lowdurationcolor or {1,0,0,1}
   ed.lowdurationcolorpicker.prev:SetTexture(unpack(ed.lowdurationcolor))
 
   ed.unitButton.text:SetText(aura.unit or "Player")
@@ -852,7 +852,7 @@ function sA:EditAura(id)
   end)
 
   ed.lowdurationcolorpicker:SetScript("OnClick", function(self)
-    local r0,g0,b0,a0 = unpack(ed.lowdurationcolor or {1,1,1,1})
+    local r0,g0,b0,a0 = unpack(ed.lowdurationcolor or {1,0,0,1})
     ColorPickerFrame.func = function()
       local r,g,b = ColorPickerFrame:GetColorRGB()
       local a = 1 - OpacitySliderFrame:GetValue()
@@ -866,15 +866,15 @@ function sA:EditAura(id)
 	  if not this:GetParent():IsShown() then
         simpleAuras.auras[id].lowdurationcolor = {r, g, b, a}
         ed.lowdurationcolor = {r, g, b, a}
-        sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor))
-        if simpleAuras.auras[id] and simpleAuras.auras[id].dual == 1 then sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor)) end
+        sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor or {1,1,1,1}))
+        if simpleAuras.auras[id] and simpleAuras.auras[id].dual == 1 then sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor or {1,1,1,1})) end
 	  end
     end
     ColorPickerFrame.cancelFunc = function()
       ed.lowdurationcolor = {r0,g0,b0,a0}
       ed.lowdurationcolorpicker.prev:SetTexture(r0,g0,b0,a0)
-      sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor))
-      if simpleAuras.auras[id] and simpleAuras.auras[id].dual == 1 then sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor)) end
+      sA.TestAura.texture:SetVertexColor(unpack(aura.auracolor or {1,1,1,1}))
+      if simpleAuras.auras[id] and simpleAuras.auras[id].dual == 1 then sA.TestAuraDual.texture:SetVertexColor(unpack(aura.auracolor or {1,1,1,1})) end
     end
     ColorPickerFrame:SetColorRGB(r0,g0,b0)
     ColorPickerFrame.hasOpacity = true
