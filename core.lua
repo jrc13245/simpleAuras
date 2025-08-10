@@ -123,11 +123,15 @@ function sA:UpdateAuras()
       if currentDuration and currentDuration > 100 then
         currentDurationtext = math.floor(currentDuration/60+0.5).."m"
 	  else
-		if currentDuration and ((aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue) or (aura.lowduration ~= 1 and currentDuration <= 5)) then
+		if currentDuration and (currentDuration <= aura.lowdurationvalue) then
           currentDurationtext = string.format("%.1f", math.floor(currentDuration*10+0.5)/10)
 		else
           currentDurationtext = math.floor(currentDuration+0.5)
 		end
+	  end
+	  
+	  if currentDurationtext == "0.0" then
+		currentDurationtext = 0
 	  end
 	  
 	  frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
@@ -144,9 +148,7 @@ function sA:UpdateAuras()
 	  local _, _, _, durationalpha = unpack(aura.auracolor or {1,1,1,1})
 	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
 	  local stackcolor = {1, 1, 1, durationalpha}
-	  if aura.unit == "Player" and aura.duration == 1
-        and ((currentDuration and aura.lowduration == 1 and currentDuration <= aura.lowdurationvalue)
-        or (aura.lowduration ~= 1 and currentDuration <= 5)) then
+	  if aura.unit == "Player" and (currentDuration and currentDuration <= aura.lowdurationvalue) then
           local _, _, _, durationalpha = unpack(aura.auracolor)
           durationcolor = {1, 0, 0, durationalpha}
           stackcolor = {1, 1, 1, durationalpha}
@@ -189,4 +191,3 @@ sAEvent:SetScript("OnUpdate", function()
   sAEvent.lastUpdate = time
   sA:UpdateAuras()
 end)
-
