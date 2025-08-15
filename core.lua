@@ -185,7 +185,7 @@ function sA:UpdateAuras()
 
   for id, aura in ipairs(simpleAuras.auras) do
   
-    local currentDuration, currentStacks, show = 600, 20, 0
+    local currentDuration, currentStacks, show, currentDurationtext = 600, 20, 0, ""
 
     if aura.name ~= "" then
 		local icon, duration, stacks
@@ -214,14 +214,16 @@ function sA:UpdateAuras()
         and (aura.lowdurationcolor or {1, 0, 0, 1})
         or  (aura.auracolor        or {1, 1, 1, 1})
 	
-      if currentDuration and currentDuration > 100 then
-        currentDurationtext = math.floor(currentDuration/60+0.5).."m"
-	  else
-		if currentDuration and (currentDuration <= aura.lowdurationvalue) then
-          currentDurationtext = string.format("%.1f", math.floor(currentDuration*10+0.5)/10)
-		else
-          currentDurationtext = math.floor(currentDuration+0.5)
-		end
+	  if aura.duration == 1 then
+		  if currentDuration and currentDuration > 100 then
+			currentDurationtext = math.floor(currentDuration/60+0.5).."m"
+		  else
+			if currentDuration and (currentDuration <= aura.lowdurationvalue) then
+			  currentDurationtext = string.format("%.1f", math.floor(currentDuration*10+0.5)/10)
+			elseif currentDuration then
+			  currentDurationtext = math.floor(currentDuration+0.5)
+			end
+		  end
 	  end
 	  
 	  if currentDurationtext == "0.0" then
