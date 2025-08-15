@@ -50,4 +50,4 @@ Other:
 - Dual: Mirrors the aura (if xpos = -150, then it will show a mirrored icon/texture at xpos 150).
 - Delete: Deletes the aura after confirmation.
 
-\* = Target Duration/Stacks need SuperWoW and CleveRoidMacros!
+\* = Target Duration/Stacks need SuperWoW and CleveRoidMacros' Testbranch!
