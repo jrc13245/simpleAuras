@@ -5,6 +5,9 @@ sA = { frames = {}, dualframes = {} }
 simpleAuras.auras   = simpleAuras.auras   or {}
 simpleAuras.refresh = simpleAuras.refresh or 5
 
+sA.SuperWoW = SetAutoloot and true or false
+sA.debuffTimers = CleveRoids.debuffTimers or {}
+
 -- Parent frame
 local sAParent = CreateFrame("Frame", "sAParentFrame", nil)
 sAParent:SetFrameStrata("BACKGROUND")
@@ -21,40 +24,131 @@ function sA:SkinFrame(frame, bg, border)
   frame:SetBackdropBorderColor(unpack(border or {0, 0, 0, 1}))
 end
 
--- Get aura info
-function sA:GetAuraInfo(unit, index, auraType)
-  local name, icon, duration, stacks
+-- Get Icon, Duration and Stacks
+function sA:GetAuraInfo(name, unit, auratype)
 
-  if not sAScanner then
-    sAScanner = CreateFrame("GameTooltip", "sAScanner", sAParent, "GameTooltipTemplate")
-    sAScanner:SetOwner(sAParent, "ANCHOR_NONE")
-  end
-  sAScanner:ClearLines()
+    local found_aura = false
+    local remaining_time = 0
+    local stacks = 0
+    local spellID = nil
 
-  if unit == "Player" then
-    local buffindex
-    if auraType == "Buff" then
-      buffindex = GetPlayerBuff(index - 1, "HELPFUL")
-    else
-      buffindex = GetPlayerBuff(index - 1, "HARMFUL")
+    local function find_aura()
+        local function search(is_debuff)
+            local i = (unit == "Player") and 0 or 1
+            while true do
+                local tex, s, sid, rem
+                if unit == "Player" then
+				
+					local buffType = is_debuff and "HARMFUL" or "HELPFUL"
+					local bid = GetPlayerBuff(i, buffType)
+					local spellID = GetPlayerBuffID(bid)
+                    tex, s, sid, rem = GetPlayerBuffTexture(bid), GetPlayerBuffApplications(bid), spellID, GetPlayerBuffTimeLeft(bid)
+					
+                else
+                    if is_debuff then
+                        tex, s, _, sid, rem = UnitDebuff(unit, i)
+                    else
+                        tex, s, sid, rem = UnitBuff(unit, i)
+                    end
+                end
+
+                if not tex then break end
+
+                if sid and name == SpellInfo(sid) then
+                    return true, s, sid, rem, tex
+                end
+                i = i + 1
+            end
+            return false
+        end
+
+		local was_found, s, sid, rem, tex
+		if auratype == "Buff" then
+			was_found, s, sid, rem, tex = search(false)
+		else
+			was_found, s, sid, rem, tex = search(true)
+			if not was_found then
+				was_found, s, sid, rem, tex = search(false)
+			end
+		end
+		
+        return was_found, s, sid, rem, tex
     end
-    sAScanner:SetPlayerBuff(buffindex)
-    icon     = GetPlayerBuffTexture(buffindex)
-    duration = GetPlayerBuffTimeLeft(buffindex)
-    stacks   = GetPlayerBuffApplications(buffindex)
-  else
-    if auraType == "Buff" then
-      sAScanner:SetUnitBuff(unit, index)
-      icon = UnitBuff(unit, index)
-    else
-      sAScanner:SetUnitDebuff(unit, index)
-      icon = UnitDebuff(unit, index)
-    end
-    duration = 0 -- temp for non-player units
-  end
 
-  name = sAScannerTextLeft1:GetText()
-  return name, icon, duration, stacks
+    found_aura, stacks, spellID, remaining_time, texture = find_aura()
+	
+    if found_aura then
+        if not remaining_time or remaining_time == 0 then
+            if spellID and sA.debuffTimers then
+                local _, unitGUID = UnitExists(unit)
+                if unitGUID then
+                    unitGUID = string.upper(string.gsub(unitGUID, "^0x", ""))
+                    local target_timers = sA.debuffTimers[unitGUID]
+                    if target_timers and target_timers[spellID] then
+                        local expiry_time = target_timers[spellID]
+                        if expiry_time > GetTime() then
+                            remaining_time = expiry_time - GetTime()
+                        else
+                            remaining_time = 0
+                        end
+                    end
+                end
+            end
+        end
+		return texture, remaining_time, stacks
+    end
+	
+end
+
+function sA:GetAuraInfoBase(auraname, unit, auraType)
+
+	local function AuraInfo(unit, index, auraType)
+		local name, icon, duration, stacks
+
+		if not sAScanner then
+			sAScanner = CreateFrame("GameTooltip", "sAScanner", sAParent, "GameTooltipTemplate")
+			sAScanner:SetOwner(sAParent, "ANCHOR_NONE")
+		end
+		sAScanner:ClearLines()
+
+		if unit == "Player" then
+			local buffindex
+			if auraType == "Buff" then
+				buffindex = GetPlayerBuff(index - 1, "HELPFUL")
+			else
+				buffindex = GetPlayerBuff(index - 1, "HARMFUL")
+			end
+			sAScanner:SetPlayerBuff(buffindex)
+			icon = GetPlayerBuffTexture(buffindex)
+			duration = GetPlayerBuffTimeLeft(buffindex)
+			stacks = GetPlayerBuffApplications(buffindex)
+		else
+			if auraType == "Buff" then
+				sAScanner:SetUnitBuff(unit, index)
+				icon = UnitBuff(unit, index)
+			else
+				sAScanner:SetUnitDebuff(unit, index)
+				icon = UnitDebuff(unit, index)
+			end
+			duration = 0 -- temp for non-player units
+		end
+
+		name = sAScannerTextLeft1:GetText()
+		
+		return name, icon, duration, stacks
+	
+	end
+	
+	local i = 1
+	while true do
+		local name, icon, duration, stacks = AuraInfo(unit, i, auraType)
+		if not name then break end
+		if name == auraname then
+			return icon, duration, stacks
+		end
+		i = i + 1
+	end
+	
 end
 
 -- Create aura display frame
@@ -91,22 +185,22 @@ function sA:UpdateAuras()
 
   for id, aura in ipairs(simpleAuras.auras) do
   
-    local currentDuration, currentStacks, show = 600, 20, 0
+    local currentDuration, currentStacks, show, currentDurationtext = 600, 20, 0, ""
 
     if aura.name ~= "" then
-      local i = 1
-      while true do
-        local name, icon, duration, stacks = self:GetAuraInfo(aura.unit, i, aura.type)
-        if not name then break end
-        if name == aura.name then
+		local icon, duration, stacks
+		if sA.SuperWoW and CleveRoids.ready then
+			icon, duration, stacks = self:GetAuraInfo(aura.name, aura.unit, aura.type)
+		else
+			icon, duration, stacks = self:GetAuraInfoBase(aura.name, aura.unit, aura.type)
+		end
+        if icon then
           show, currentDuration, currentStacks = 1, duration, stacks
-          if aura.autodetect == 1 then
+          if aura.autodetect == 1 and simpleAuras.auras[id].texture ~= icon then
             aura.texture = icon
             simpleAuras.auras[id].texture = icon
           end
-        end
-        i = i + 1
-      end
+		end
       if aura.invert == 1 then show = 1 - show end
     end
 
@@ -120,14 +214,16 @@ function sA:UpdateAuras()
         and (aura.lowdurationcolor or {1, 0, 0, 1})
         or  (aura.auracolor        or {1, 1, 1, 1})
 	
-      if currentDuration and currentDuration > 100 then
-        currentDurationtext = math.floor(currentDuration/60+0.5).."m"
-	  else
-		if currentDuration and (currentDuration <= aura.lowdurationvalue) then
-          currentDurationtext = string.format("%.1f", math.floor(currentDuration*10+0.5)/10)
-		else
-          currentDurationtext = math.floor(currentDuration+0.5)
-		end
+	  if aura.duration == 1 then
+		  if currentDuration and currentDuration > 100 then
+			currentDurationtext = math.floor(currentDuration/60+0.5).."m"
+		  else
+			if currentDuration and (currentDuration <= aura.lowdurationvalue) then
+			  currentDurationtext = string.format("%.1f", math.floor(currentDuration*10+0.5)/10)
+			elseif currentDuration then
+			  currentDurationtext = math.floor(currentDuration+0.5)
+			end
+		  end
 	  end
 	  
 	  if currentDurationtext == "0.0" then
@@ -140,7 +236,7 @@ function sA:UpdateAuras()
       frame:SetHeight(48*(aura.scale or 1))
       frame.texture:SetTexture(aura.texture)
       frame.texture:SetVertexColor(unpack(color))
-      frame.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDurationtext or "")
+      frame.durationtext:SetText((aura.duration == 1 and ((sA.SuperWoW and CleveRoids.ready) or aura.unit == "Player")) and currentDurationtext or "")
       frame.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
       if aura.duration == 1 then frame.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") end
       if aura.stacks == 1 then frame.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") end
@@ -148,7 +244,7 @@ function sA:UpdateAuras()
 	  local _, _, _, durationalpha = unpack(aura.auracolor or {1,1,1,1})
 	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
 	  local stackcolor = {1, 1, 1, durationalpha}
-	  if aura.unit == "Player" and (currentDuration and currentDuration <= aura.lowdurationvalue) then
+	  if ((sA.SuperWoW and CleveRoids.ready) or aura.unit == "Player") and (currentDuration and currentDuration <= aura.lowdurationvalue) then
           local _, _, _, durationalpha = unpack(aura.auracolor)
           durationcolor = {1, 0, 0, durationalpha}
           stackcolor = {1, 1, 1, durationalpha}
@@ -166,7 +262,7 @@ function sA:UpdateAuras()
         dualframe:SetHeight(48*(aura.scale or 1))
         dualframe.texture:SetTexture(aura.texture)
         dualframe.texture:SetVertexColor(unpack(color))
-        dualframe.durationtext:SetText((aura.duration == 1 and aura.unit == "Player") and currentDurationtext or "")
+        dualframe.durationtext:SetText((aura.duration == 1 and ((sA.SuperWoW and CleveRoids.ready) or aura.unit == "Player")) and currentDurationtext or "")
         dualframe.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
         if aura.duration == 1 then dualframe.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (18*aura.scale), "OUTLINE") end
         if aura.stacks == 1 then dualframe.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (12*aura.scale), "OUTLINE") end
