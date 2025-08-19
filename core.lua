@@ -210,7 +210,7 @@ function sA:UpdateAuras()
     if aura.dual == 1 then self.dualframes[id] = dualframe end
 
     if (show == 1 or (gui and gui:IsVisible())) and (not gui.editor or not gui.editor:IsVisible()) then
-      local color = (aura.lowduration == 1 and currentDuration and currentDuration <= aura.lowdurationvalue)
+      local color = (aura.lowduration == 1 and currentDuration and currentDuration <= (aura.lowdurationvalue or 3))
         and (aura.lowdurationcolor or {1, 0, 0, 1})
         or  (aura.auracolor        or {1, 1, 1, 1})
 	
@@ -287,3 +287,4 @@ sAEvent:SetScript("OnUpdate", function()
   sAEvent.lastUpdate = time
   sA:UpdateAuras()
 end)
+
