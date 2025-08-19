@@ -56,4 +56,4 @@ Other:
 - [c] / Copy: Copies the aura.
 - Delete: Deletes the aura after confirmation.
 
-\* = Target Duration/Stacks need SuperWoW and CleveRoidMacros' Testbranch!
+\* = Target Duration/Stacks need SuperWoW and CleveRoidMacros' [Testbranch](https://github.com/jrc13245/CleveRoidMacros/tree/test)!
