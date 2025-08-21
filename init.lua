@@ -41,79 +41,81 @@ local function deepCopy(tbl)
   return t
 end
 
--- Event handler
-local sADuration = CreateFrame("Frame")
-sADuration:RegisterEvent("RAW_COMBATLOG")
-sADuration:RegisterEvent("UNIT_CASTEVENT")
-sADuration:SetScript("OnEvent", function()
-    
-	local timestamp = GetTime()
-	
-    if event == "RAW_COMBATLOG" and simpleAuras.auradurations then
-        local raw = arg2
-        if not raw or not string.find(raw, "fades from") then return end
-        local _, _, spellName = string.find(raw, "^(.-) fades from ")
-        local _, _, targetGUID = string.find(raw, "from (.-).$")
-        if string.lower(targetGUID) == "you" then
-            _, targetGUID = UnitExists("player")
-        end
-        targetGUID = string.gsub(targetGUID or "", "^0x", "")
-        if not spellName or not targetGUID then return end
+-- Durations
+if sA.SuperWoW then
+	local sADuration = CreateFrame("Frame")
+	sADuration:RegisterEvent("RAW_COMBATLOG")
+	sADuration:RegisterEvent("UNIT_CASTEVENT")
+	sADuration:SetScript("OnEvent", function()
+	    
+		local timestamp = GetTime()
 		
-        if not sA.auraTimers[targetGUID] then return end
-		
-		for spellID in pairs(sA.auraTimers[targetGUID]) do
-			local n = SpellInfo(spellID)
-			if n then
-				n = string.gsub(n, "%s*%(%s*Rank%s+%d+%s*%)", "")
-				if n == spellName then
-					-- Calculate actual duration if updating
-					if ActiveCasts[targetGUID] and ActiveCasts[targetGUID][spellID] then
-						local castTime = ActiveCasts[targetGUID][spellID]
-						local actualDur = timestamp - castTime
-						simpleAuras.auradurations[spellID] = math.floor(actualDur+0.5)
-						if simpleAuras.updating == 1 then
-							DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Updated duration for "..spellName.." ("..spellID..") to: "..(math.floor(actualDur+0.5)).."s")
+	    if event == "RAW_COMBATLOG" and simpleAuras.auradurations then
+	        local raw = arg2
+	        if not raw or not string.find(raw, "fades from") then return end
+	        local _, _, spellName = string.find(raw, "^(.-) fades from ")
+	        local _, _, targetGUID = string.find(raw, "from (.-).$")
+	        if string.lower(targetGUID) == "you" then
+	            _, targetGUID = UnitExists("player")
+	        end
+	        targetGUID = string.gsub(targetGUID or "", "^0x", "")
+	        if not spellName or not targetGUID then return end
+			
+	        if not sA.auraTimers[targetGUID] then return end
+			
+			for spellID in pairs(sA.auraTimers[targetGUID]) do
+				local n = SpellInfo(spellID)
+				if n then
+					n = string.gsub(n, "%s*%(%s*Rank%s+%d+%s*%)", "")
+					if n == spellName then
+						-- Calculate actual duration if updating
+						if ActiveCasts[targetGUID] and ActiveCasts[targetGUID][spellID] then
+							local castTime = ActiveCasts[targetGUID][spellID]
+							local actualDur = timestamp - castTime
+							simpleAuras.auradurations[spellID] = math.floor(actualDur+0.5)
+							if simpleAuras.updating == 1 then
+								DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Updated duration for "..spellName.." ("..spellID..") to: "..(math.floor(actualDur+0.5)).."s")
+							end
+							ActiveCasts[targetGUID][spellID] = nil
 						end
-						ActiveCasts[targetGUID][spellID] = nil
+						sA.auraTimers[spellID] = nil
+						if not next(sA.auraTimers[targetGUID]) then
+							sA.auraTimers[targetGUID] = nil
+						end
+						break
 					end
-					sA.auraTimers[spellID] = nil
-					if not next(sA.auraTimers[targetGUID]) then
-						sA.auraTimers[targetGUID] = nil
-					end
-					break
 				end
 			end
-		end
-
-    -- Handle casts (gains)
-    elseif event == "UNIT_CASTEVENT" and simpleAuras.auradurations then
-        local casterGUID, targetGUID, evType, spellID = arg1, arg2, arg3, arg4
-        if evType ~= "CAST" or not targetGUID or not spellID then return end
-        local dur = GetAuraDurationBySpellID(spellID)
-        local spellName = SpellInfo(spellID)
-
-		local _, playerGUID = UnitExists("player")
-		playerGUID = string.gsub(playerGUID, "^0x", "")
-        targetGUID = string.gsub(targetGUID, "^0x", "")
-        casterGUID = string.gsub(casterGUID, "^0x", "")
-		
-        if dur and dur > 0 and simpleAuras.updating == 0 then
-            sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
-            sA.auraTimers[targetGUID][spellID] = timestamp + dur
-        elseif casterGUID == playerGUID then
-			if targetGUID == "" then targetGUID = playerGUID end
-			ActiveCasts[targetGUID] = ActiveCasts[targetGUID] or {}
-			ActiveCasts[targetGUID][spellID] = timestamp
-			sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
-			sA.auraTimers[targetGUID][spellID] = 0
-			if simpleAuras.updating == 1 then
-				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Updating duration for "..spellName.." ("..spellID..") - wait for it to fade.")
-			end
-        end
-		
-    end
-end)
+	
+	    -- Handle casts (gains)
+	    elseif event == "UNIT_CASTEVENT" and simpleAuras.auradurations then
+	        local casterGUID, targetGUID, evType, spellID = arg1, arg2, arg3, arg4
+	        if evType ~= "CAST" or not targetGUID or not spellID then return end
+	        local dur = GetAuraDurationBySpellID(spellID)
+	        local spellName = SpellInfo(spellID)
+	
+			local _, playerGUID = UnitExists("player")
+			playerGUID = string.gsub(playerGUID, "^0x", "")
+	        targetGUID = string.gsub(targetGUID, "^0x", "")
+	        casterGUID = string.gsub(casterGUID, "^0x", "")
+			
+	        if dur and dur > 0 and simpleAuras.updating == 0 then
+	            sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
+	            sA.auraTimers[targetGUID][spellID] = timestamp + dur
+	        elseif casterGUID == playerGUID then
+				if targetGUID == "" then targetGUID = playerGUID end
+				ActiveCasts[targetGUID] = ActiveCasts[targetGUID] or {}
+				ActiveCasts[targetGUID][spellID] = timestamp
+				sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
+				sA.auraTimers[targetGUID][spellID] = 0
+				if simpleAuras.updating == 1 then
+					DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Updating duration for "..spellName.." ("..spellID..") - wait for it to fade.")
+				end
+	        end
+			
+	    end
+	end)
+end
 
 -- Event frame for timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", sAParent)
@@ -181,13 +183,17 @@ SlashCmdList["sA"] = function(msg)
 	
 	-- refresh command
 	if cmd == "update" then
-		local num = tonumber(val)
-		if num and num >= 0 and num <= 1 then
-			simpleAuras.updating = num
-			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Aura durations update status set to " .. num)
+		if sA.SuperWoW then
+			local num = tonumber(val)
+			if num and num >= 0 and num <= 1 then
+				simpleAuras.updating = num
+				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Aura durations update status set to " .. num)
+			else
+				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage: /sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
+				DEFAULT_CHAT_FRAME:AddMessage("Current update status = " .. tostring(simpleAuras.updating))
+			end
 		else
-			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage: /sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
-			DEFAULT_CHAT_FRAME:AddMessage("Current update status = " .. tostring(simpleAuras.updating))
+			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: /sa update requires SuperWoW!")
 		end
 		return
 	end
@@ -204,7 +210,7 @@ SlashCmdList["sA"] = function(msg)
 				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage: /sa learn spellID Duration - manually set duration of spell.")
 			end
 		else
-			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: /sa learn needs SuperWoW to be installed!")
+			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: /sa learn requires SuperWoW!")
 		end
 		return
 	end
@@ -214,7 +220,10 @@ SlashCmdList["sA"] = function(msg)
 	DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage:")
 	DEFAULT_CHAT_FRAME:AddMessage("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
 	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)")
-	DEFAULT_CHAT_FRAME:AddMessage("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
-	DEFAULT_CHAT_FRAME:AddMessage("/sa learn X Y - manually set duration Y for aura with ID X.")
+	if sA.SuperWoW then
+		DEFAULT_CHAT_FRAME:AddMessage("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
+		DEFAULT_CHAT_FRAME:AddMessage("/sa learn X Y - manually set duration Y for aura with ID X.")
+	end
+
 
 end
