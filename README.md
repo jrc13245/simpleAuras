@@ -9,6 +9,11 @@
 
 /sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)
 
+### SuperWoW commands:
+/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)
+
+/sa learn X Y - manually set duration Y for aura with ID X.
+
 
 ## Settings (/sa)
 <img width="817" height="539" alt="image" src="https://github.com/user-attachments/assets/6d9809da-b9d6-412b-8ca8-c7e4be413ac2" />
@@ -23,7 +28,7 @@ Shows all existing auras.
 ### Aura-Editor
 Shows the currently edited aura only.
 
-####Aura/Spellname Name:
+Aura/Spellname Name:
 - Name of the aura to track (has to be exactly the same name)
 
 
@@ -56,4 +61,16 @@ Other:
 - [c] / Copy: Copies the aura.
 - Delete: Deletes the aura after confirmation.
 
-\* = Target Duration/Stacks need SuperWoW and CleveRoidMacros' [Testbranch](https://github.com/jrc13245/CleveRoidMacros/tree/test)!
+\* = For these functions to work on targets SuperWoW is REQUIRED!
+
+
+## SuperWoW Features
+If SuperWoW is installed, simpleAuras will automatically learn unkown durations of most auras with the first cast (needs to run out to be accurate).
+
+Some Spells can't be properly tracked because they use different names during apply and fade (Enlighten -> Enlightened for example).
+
+In those cases, use /sa learn X Y - manually set duration Y for aura with ID X.
+
+
+## Special Thanks
+- Torio ([SuperCleveRoidMacros](https://github.com/jrc13245/SuperCleveRoidMacros))
