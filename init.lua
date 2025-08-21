@@ -67,7 +67,7 @@ if sA.SuperWoW then
 							local actualDur = timestamp - castTime
 							simpleAuras.auradurations[spellID] = math.floor(actualDur+0.5)
 							if simpleAuras.updating == 1 then
-								DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Updated duration for "..spellName.." ("..spellID..") to: "..(math.floor(actualDur+0.5)).."s")
+								DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: Updated duration for "..spellName.." ("..spellID..") to: "..(math.floor(actualDur+0.5)).."s")
 							end
 							ActiveCasts[targetGUID][spellID] = nil
 						end
@@ -102,7 +102,7 @@ if sA.SuperWoW then
 				sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
 				sA.auraTimers[targetGUID][spellID] = 0
 				if simpleAuras.updating == 1 then
-					DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Updating duration for "..spellName.." ("..spellID..") - wait for it to fade.")
+					DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: Updating duration for "..spellName.." ("..spellID..") - wait for it to fade.")
 				end
 	        end
 			
@@ -166,9 +166,9 @@ SlashCmdList["sA"] = function(msg)
 		local num = tonumber(val)
 		if num and num >= 1 and num <= 100 then
 			simpleAuras.refresh = num
-			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Refresh set to " .. num .. " times per second")
+			DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: Refresh set to " .. num .. " times per second")
 		else
-			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage: /sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)")
+			DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras Usage: /sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)")
 			DEFAULT_CHAT_FRAME:AddMessage("Current refresh = " .. tostring(simpleAuras.refresh) .. " times per second")
 		end
 		return
@@ -180,13 +180,13 @@ SlashCmdList["sA"] = function(msg)
 			local num = tonumber(val)
 			if num and num >= 0 and num <= 1 then
 				simpleAuras.updating = num
-				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Aura durations update status set to " .. num)
+				DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: Aura durations update status set to " .. num)
 			else
-				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage: /sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
+				DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras Usage: /sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
 				DEFAULT_CHAT_FRAME:AddMessage("Current update status = " .. tostring(simpleAuras.updating))
 			end
 		else
-			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: /sa update requires SuperWoW!")
+			DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: /sa update requires SuperWoW!")
 		end
 		return
 	end
@@ -198,19 +198,19 @@ SlashCmdList["sA"] = function(msg)
 			local fade = tonumber(fad)
 			if spell and fade then
 				simpleAuras.auradurations[spell] = fade
-				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: Set Duration of "..SpellInfo(spell).."("..spell..") to " .. fade .. " seconds.")
+				DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: Set Duration of "..SpellInfo(spell).."("..spell..") to " .. fade .. " seconds.")
 			else
-				DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage: /sa learn spellID Duration - manually set duration of spell.")
+				DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras Usage: /sa learn spellID Duration - manually set duration of spell.")
 			end
 		else
-			DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras: /sa learn requires SuperWoW!")
+			DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: /sa learn requires SuperWoW!")
 		end
 		return
 	end
 	
 
 	-- Unknown command fallback
-	DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccsimple|cffffffffAuras Usage:")
+	DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras Usage:")
 	DEFAULT_CHAT_FRAME:AddMessage("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
 	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)")
 	if sA.SuperWoW then
@@ -220,5 +220,6 @@ SlashCmdList["sA"] = function(msg)
 
 
 end
+
 
 
