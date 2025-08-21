@@ -19,8 +19,10 @@ if not simpleAuras then simpleAuras = {} end
 -- Defaults
 simpleAuras.auras          = simpleAuras.auras or {}
 simpleAuras.refresh        = simpleAuras.refresh or 10
-simpleAuras.auradurations  = simpleAuras.auradurations or {}
-simpleAuras.updating       = simpleAuras.updating or 0
+if sA.SuperWoW then
+	simpleAuras.auradurations  = simpleAuras.auradurations or {}
+	simpleAuras.updating       = simpleAuras.updating or 0
+end
 
 ---------------------------------------------------
 -- Helper Functions
@@ -227,3 +229,4 @@ SlashCmdList["sA"] = function(msg)
 
 
 end
+
