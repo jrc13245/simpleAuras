@@ -18,7 +18,7 @@ if not simpleAuras then simpleAuras = {} end
 
 -- Defaults
 simpleAuras.auras          = simpleAuras.auras or {}
-simpleAuras.refresh        = simpleAuras.refresh or 10
+simpleAuras.refresh        = simpleAuras.refresh or 5
 if sA.SuperWoW then
 	simpleAuras.auradurations  = simpleAuras.auradurations or {}
 	simpleAuras.updating       = simpleAuras.updating or 0
@@ -212,7 +212,7 @@ SlashCmdList["sA"] = function(msg)
 	-- Unknown command fallback
 	DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras Usage:")
 	DEFAULT_CHAT_FRAME:AddMessage("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
-	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)")
+	DEFAULT_CHAT_FRAME:AddMessage("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
 	if sA.SuperWoW then
 		DEFAULT_CHAT_FRAME:AddMessage("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
 		DEFAULT_CHAT_FRAME:AddMessage("/sa learn X Y - manually set duration Y for aura with ID X.")
@@ -220,6 +220,7 @@ SlashCmdList["sA"] = function(msg)
 
 
 end
+
 
 
 
