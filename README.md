@@ -7,7 +7,7 @@
 ## Console Commands:
 /sa or /sa show or /sa hide - Show/hide simpleAuras Settings
 
-/sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)
+/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)
 
 ### SuperWoW commands:
 /sa update X - force aura durations updates (1 = learn aura durations. Default: 0)
