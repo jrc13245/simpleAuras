@@ -34,15 +34,6 @@ local function GetAuraDurationBySpellID(spellID)
     return simpleAuras.auradurations[spellID]
 end
 
--- Deep copy helper
-local function deepCopy(tbl)
-  local t = {}
-  for k, v in pairs(tbl) do
-    t[k] = (type(v) == "table") and deepCopy(v) or v
-  end
-  return t
-end
-
 -- Durations
 if sA.SuperWoW then
 	local sADuration = CreateFrame("Frame")
