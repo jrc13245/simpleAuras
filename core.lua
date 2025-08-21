@@ -52,19 +52,6 @@ function sA:GetAuraInfo(name, unit, auratype)
 		return texture, remaining_time, 1
 		
 	else
-	
-	-- if unit == "Target" then
-		-- local testremaining, testreapplied = GetAuraRemainingDuration(unit, name, auratype)
-		
-		-- if testremaining then
-			-- print(name.." remaining:", string.format("%.1f", testremaining), "seconds")
-			-- if testreapplied then
-				-- print(">> "..name.." was just refreshed!")
-			-- end
-		-- else
-			-- print("No "..name.." on "..unit)
-		-- end
-	-- end
 
 		local found_aura = false
 		local remaining_time = 0
@@ -347,3 +334,4 @@ function sA:UpdateAuras()
     end
   end
 end
+
