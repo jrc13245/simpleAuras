@@ -1,6 +1,6 @@
 ## Interface: 11200
 ## Title: |cff33ffccsimple|cffffffffAuras
-## Notes: Simple Aura Display.
+## Notes: Simple Aura Display. /sa help
 ## Version: 0.6
 ## Author: yani9o
 ## SavedVariablesPerCharacter: simpleAuras
