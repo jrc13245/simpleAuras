@@ -1,3 +1,12 @@
+-- Deep copy helper
+local function deepCopy(tbl)
+  local t = {}
+  for k, v in pairs(tbl) do
+    t[k] = (type(v) == "table") and deepCopy(v) or v
+  end
+  return t
+end
+
 -- Create Test frames (used by editor preview)
 local TestAura = CreateFrame("Frame", "sATest", UIParent)
 TestAura:SetFrameStrata("BACKGROUND")
@@ -1078,4 +1087,5 @@ end
 
 -- Init
 RefreshAuraList()
+
 
