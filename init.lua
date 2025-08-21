@@ -168,7 +168,7 @@ SlashCmdList["sA"] = function(msg)
 			simpleAuras.refresh = num
 			DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras: Refresh set to " .. num .. " times per second")
 		else
-			DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras Usage: /sa refresh X - Set refresh rate. (1 to 100 updates per second. Default: 10)")
+			DEFAULT_CHAT_FRAME:AddMessage("|c194b7dccsimple|cffffffffAuras Usage: /sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
 			DEFAULT_CHAT_FRAME:AddMessage("Current refresh = " .. tostring(simpleAuras.refresh) .. " times per second")
 		end
 		return
@@ -220,6 +220,7 @@ SlashCmdList["sA"] = function(msg)
 
 
 end
+
 
 
 
