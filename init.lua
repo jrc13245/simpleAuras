@@ -89,7 +89,7 @@ if sA.SuperWoW then
 	
 			local _, playerGUID = UnitExists("player")
 			playerGUID = string.gsub(playerGUID, "^0x", "")
-	        targetGUID = string.gsub(targetGUID, "^0x", "")
+	        if targetGUID then targetGUID = string.gsub(targetGUID, "^0x", "") end
 	        casterGUID = string.gsub(casterGUID, "^0x", "")
 			
 	        if dur and dur > 0 and simpleAuras.updating == 0 then
@@ -220,4 +220,5 @@ SlashCmdList["sA"] = function(msg)
 
 
 end
+
 
