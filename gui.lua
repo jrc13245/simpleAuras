@@ -179,7 +179,7 @@ function RefreshAuraList()
 end
 
 -- Save aura data from editor
-function SaveAura(id)
+local function SaveAura(id)
   local ed = gui.editor
   if not ed then return end
   local data = simpleAuras.auras[id]
@@ -218,7 +218,7 @@ function SaveAura(id)
 end
 
 -- Add new aura (optionally copy from existing)
-function AddAura(copyId)
+local function AddAura(copyId)
   table.insert(simpleAuras.auras, {})
   local newId = table.getn(simpleAuras.auras)
   if copyId and simpleAuras.auras[copyId] then
@@ -1087,5 +1087,6 @@ end
 
 -- Init
 RefreshAuraList()
+
 
 
