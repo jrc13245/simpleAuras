@@ -67,10 +67,11 @@ Other:
 ## SuperWoW Features
 If SuperWoW is installed, simpleAuras will automatically learn unkown durations of most auras with the first cast (needs to run out to be accurate).
 
-Some Spells can't be properly tracked because they use different names during apply and fade (Enlighten -> Enlightened or Weakened Soul for example).
+Some Spells aren't properly tracked because they use different names during apply and fade or don't trigger the event used to track them (Enlighten -> Enlightened and Weakened Soul for example).
 
-In those cases, use /sa learn X Y - manually set duration Y for aura with ID X.
+In those cases, use "/sa learn X Y" to manually set duration Y for aura with ID X.
 
 
-## Special Thanks
+## Special Thanks / Credits
 - Torio ([SuperCleveRoidMacros](https://github.com/jrc13245/SuperCleveRoidMacros))
+- [MPOWA](https://github.com/MarcelineVQ/ModifiedPowerAuras) (Textures)
