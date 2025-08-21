@@ -226,7 +226,7 @@ function sA:UpdateAuras()
 
     if aura.name ~= "" and ((aura.inCombat == 1 and sAinCombat) or (aura.outCombat == 1 and not sAinCombat)) then
 		local icon, duration, stacks
-		if sA.SuperWoW and CleveRoids.ready then
+		if sA.SuperWoW then
 			icon, duration, stacks = self:GetAuraInfo(aura.name, aura.unit, aura.type)
 		else
 			icon, duration, stacks = self:GetAuraInfoBase(aura.name, aura.unit, aura.type)
@@ -280,7 +280,7 @@ function sA:UpdateAuras()
       frame:SetWidth(48*(aura.scale or 1))
       frame:SetHeight(48*(aura.scale or 1))
       frame.texture:SetTexture(aura.texture)
-      frame.durationtext:SetText((aura.duration == 1 and ((sA.SuperWoW and CleveRoids.ready) or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
+      frame.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
       frame.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
       if aura.duration == 1 then frame.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (20*aura.scale), "OUTLINE") end
       if aura.stacks == 1 then frame.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (14*aura.scale), "OUTLINE") end
@@ -295,7 +295,7 @@ function sA:UpdateAuras()
 	  
 	  local durationcolor = {1.0, 0.82, 0.0, durationalpha}
 	  local stackcolor = {1, 1, 1, durationalpha}
-	  if ((sA.SuperWoW and CleveRoids.ready) or aura.unit == "Player" or aura.type == "Cooldown") and (currentDuration and currentDuration <= (aura.lowdurationvalue or 5)) then
+	  if (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown") and (currentDuration and currentDuration <= (aura.lowdurationvalue or 5)) then
           local _, _, _, durationalpha = unpack(aura.auracolor)
           durationcolor = {1, 0, 0, durationalpha}
           stackcolor = {1, 1, 1, durationalpha}
@@ -319,7 +319,7 @@ function sA:UpdateAuras()
 			dualframe.texture:SetVertexColor(unpack(color))
 		  end
 	  
-        dualframe.durationtext:SetText((aura.duration == 1 and ((sA.SuperWoW and CleveRoids.ready) or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
+        dualframe.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
         dualframe.stackstext:SetText((aura.stacks   == 1) and currentStacks or "")
         if aura.duration == 1 then dualframe.durationtext:SetFont("Fonts\\FRIZQT__.TTF", (20*aura.scale), "OUTLINE") end
         if aura.stacks == 1 then dualframe.stackstext:SetFont("Fonts\\FRIZQT__.TTF", (14*aura.scale), "OUTLINE") end
@@ -334,4 +334,5 @@ function sA:UpdateAuras()
     end
   end
 end
+
 
