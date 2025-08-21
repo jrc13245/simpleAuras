@@ -4,5 +4,6 @@
 ## Version: 0.5
 ## Author: yani9o
 ## SavedVariablesPerCharacter: simpleAuras
+init.lua
 core.lua
 gui.lua

@@ -1,15 +1,3 @@
--- Globals & defaults
-simpleAuras = simpleAuras or {}
-sA = { frames = {}, dualframes = {} }
-
-simpleAuras.auras   = simpleAuras.auras   or {}
-simpleAuras.refresh = simpleAuras.refresh or 10
-
-sA.SuperWoW = SetAutoloot and true or false
-sA.debuffTimers = CleveRoids and CleveRoids.debuffTimers or {}
-
-sAinCombat = nil
-
 -- Parent frame
 local sAParent = CreateFrame("Frame", "sAParentFrame", nil)
 sAParent:SetFrameStrata("BACKGROUND")
@@ -64,6 +52,19 @@ function sA:GetAuraInfo(name, unit, auratype)
 		return texture, remaining_time, 1
 		
 	else
+	
+	-- if unit == "Target" then
+		-- local testremaining, testreapplied = GetAuraRemainingDuration(unit, name, auratype)
+		
+		-- if testremaining then
+			-- print(name.." remaining:", string.format("%.1f", testremaining), "seconds")
+			-- if testreapplied then
+				-- print(">> "..name.." was just refreshed!")
+			-- end
+		-- else
+			-- print("No "..name.." on "..unit)
+		-- end
+	-- end
 
 		local found_aura = false
 		local remaining_time = 0
@@ -117,11 +118,11 @@ function sA:GetAuraInfo(name, unit, auratype)
 		
 		if found_aura then
 			if not remaining_time or remaining_time == 0 then
-				if spellID and sA.debuffTimers then
+				if spellID and sA.auraTimers then
 					local _, unitGUID = UnitExists(unit)
 					if unitGUID then
 						unitGUID = string.upper(string.gsub(unitGUID, "^0x", ""))
-						local target_timers = sA.debuffTimers[unitGUID]
+						local target_timers = sA.auraTimers[unitGUID]
 						if target_timers and target_timers[spellID] then
 							local expiry_time = target_timers[spellID]
 							if expiry_time > GetTime() then
@@ -283,6 +284,8 @@ function sA:UpdateAuras()
 	  
 	  if currentDurationtext == "0.0" then
 		currentDurationtext = 0
+	  elseif currentDurationtext == "0" then
+		currentDurationtext = "learning..."
 	  end
 	  
 	  frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
@@ -344,24 +347,3 @@ function sA:UpdateAuras()
     end
   end
 end
-
--- Event frame for timed updates
-local sAEvent = CreateFrame("Frame", "sAEvent", sAParent)
-sAEvent:SetScript("OnUpdate", function()
-  local time = GetTime()
-  local refreshRate = 1 / simpleAuras.refresh
-  if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
-  sAEvent.lastUpdate = time
-  sA:UpdateAuras()
-end)
-
-local sACombat = CreateFrame("Frame")
-sACombat:RegisterEvent("PLAYER_REGEN_DISABLED")
-sACombat:RegisterEvent("PLAYER_REGEN_ENABLED")
-sACombat:SetScript("OnEvent", function()
-    if event == "PLAYER_REGEN_DISABLED" then
-        sAinCombat = true
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        sAinCombat = nil
-    end
-end)
