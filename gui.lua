@@ -197,8 +197,8 @@ function sA.SaveAura(id)
   data.lowdurationcolor= ed.lowdurationcolor
   data.unit            = ed.unitButton.text:GetText()
   data.type            = ed.typeButton.text:GetText()
-  data.inCombat        = ed.inCombat.value
-  data.outCombat       = ed.outCombat.value
+  data.inCombat        = ed.inCombat.value or 1
+  data.outCombat       = ed.outCombat.value or 1
   data.invert          = ed.invert.value
   data.dual            = ed.dual.value
 
@@ -224,7 +224,7 @@ function sA.AddAura(copyId)
   if copyId and simpleAuras.auras[copyId] then
     simpleAuras.auras[newId] = deepCopy(simpleAuras.auras[copyId])
   else
-    simpleAuras.auras[newId] = { name = "", texture = "Interface\\Icons\\INV_Misc_QuestionMark" }
+    simpleAuras.auras[newId] = { name = "", texture = "Interface\\Icons\\INV_Misc_QuestionMark", inCombat = 1, outCombat = 1 }
   end
   if gui.editor and gui.editor:IsShown() then
     gui.editor:Hide()
@@ -1087,6 +1087,7 @@ end
 
 -- Init
 sA:RefreshAuraList()
+
 
 
 
