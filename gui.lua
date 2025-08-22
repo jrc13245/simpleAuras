@@ -71,7 +71,7 @@ addBtn.text = addBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 addBtn.text:SetPoint("CENTER", addBtn, "CENTER", 0, 0)
 addBtn.text:SetText("+")
 addBtn:SetFontString(addBtn.text)
-addBtn:SetScript("OnClick", function() AddAura() end)
+addBtn:SetScript("OnClick", function() sA:AddAura() end)
 addBtn:SetScript("OnEnter", function() addBtn:SetBackdropColor(0.1, 0.4, 0.1, 1) end)
 addBtn:SetScript("OnLeave", function() addBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
@@ -94,7 +94,7 @@ closeBtn:SetScript("OnEnter", function() closeBtn:SetBackdropColor(0.5, 0.5, 0.5
 closeBtn:SetScript("OnLeave", function() closeBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
 -- Refresh list of configured auras
-function RefreshAuraList()
+function sA.RefreshAuraList()
   for _, entry in ipairs(gui.list or {}) do entry:Hide() end
   gui.list = {}
 
@@ -137,7 +137,7 @@ function RefreshAuraList()
       up:SetScript("OnLeave", function() up:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
       up:SetScript("OnClick", function()
         simpleAuras.auras[id], simpleAuras.auras[id-1] = simpleAuras.auras[id-1], simpleAuras.auras[id]
-        RefreshAuraList()
+        sA:RefreshAuraList()
 		if gui.editor then
           if sA.TestAura then sA.TestAura:Hide() end
           if sA.TestAuraDual then sA.TestAuraDual:Hide() end
@@ -163,7 +163,7 @@ function RefreshAuraList()
       down:SetScript("OnLeave", function() down:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
       down:SetScript("OnClick", function()
         simpleAuras.auras[id], simpleAuras.auras[id+1] = simpleAuras.auras[id+1], simpleAuras.auras[id]
-        RefreshAuraList()
+        sA:RefreshAuraList()
 		if gui.editor then
           if sA.TestAura then sA.TestAura:Hide() end
           if sA.TestAuraDual then sA.TestAuraDual:Hide() end
@@ -179,7 +179,7 @@ function RefreshAuraList()
 end
 
 -- Save aura data from editor
-function SaveAura(id)
+function sA.SaveAura(id)
   local ed = gui.editor
   if not ed then return end
   local data = simpleAuras.auras[id]
@@ -213,12 +213,12 @@ function SaveAura(id)
   if sA.TestAuraDual then sA.TestAuraDual:Hide() end
   ed:Hide()
   gui.editor = nil
-  RefreshAuraList()
+  sA:RefreshAuraList()
   sA:EditAura(id)
 end
 
 -- Add new aura (optionally copy from existing)
-function AddAura(copyId)
+function sA.AddAura(copyId)
   table.insert(simpleAuras.auras, {})
   local newId = table.getn(simpleAuras.auras)
   if copyId and simpleAuras.auras[copyId] then
@@ -233,7 +233,7 @@ function AddAura(copyId)
     if sA.TestAuraDual then sA.TestAuraDual:Hide() end
   end
   sA:UpdateAuras()
-  RefreshAuraList()
+  sA:RefreshAuraList()
   sA:EditAura(newId)
 end
 
@@ -276,7 +276,7 @@ function sA:EditAura(id)
     ed.name:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     ed.name:SetBackdropColor(0.1, 0.1, 0.1, 1)
     ed.name:SetBackdropBorderColor(0, 0, 0, 1)
-    ed.name:SetScript("OnEnterPressed", function() SaveAura(id) end)
+    ed.name:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     -- Separator
     local lineone = ed:CreateTexture(nil, "ARTWORK")
@@ -317,7 +317,7 @@ function sA:EditAura(id)
     ed.autoDetect:SetScript("OnClick", function(self)
       ed.autoDetect.value = 1 - (ed.autoDetect.value or 0)
       if ed.autoDetect.value == 1 then ed.autoDetect.checked:Show() else ed.autoDetect.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
 
     ed.autoLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -336,7 +336,7 @@ function sA:EditAura(id)
     ed.texturePath:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     ed.texturePath:SetBackdropColor(0.1,0.1,0.1,1)
     ed.texturePath:SetBackdropBorderColor(0,0,0,1)
-    ed.texturePath:SetScript("OnEnterPressed", function() SaveAura(id) end)
+    ed.texturePath:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     ed.browseBtn = CreateFrame("Button", nil, ed)
     ed.browseBtn:SetWidth(60)
@@ -365,7 +365,7 @@ function sA:EditAura(id)
     ed.scale:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     ed.scale:SetBackdropColor(0.1,0.1,0.1,1)
     ed.scale:SetBackdropBorderColor(0,0,0,1)
-    ed.scale:SetScript("OnEnterPressed", function() SaveAura(id) end)
+    ed.scale:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     ed.xLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.xLabel:SetPoint("LEFT", ed.scale, "RIGHT", 35, 0)
@@ -382,7 +382,7 @@ function sA:EditAura(id)
     ed.x:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     ed.x:SetBackdropColor(0.1,0.1,0.1,1)
     ed.x:SetBackdropBorderColor(0,0,0,1)
-    ed.x:SetScript("OnEnterPressed", function() SaveAura(id) end)
+    ed.x:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     ed.yLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.yLabel:SetPoint("LEFT", ed.x, "RIGHT", 30, 0)
@@ -399,7 +399,7 @@ function sA:EditAura(id)
     ed.y:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     ed.y:SetBackdropColor(0.1,0.1,0.1,1)
     ed.y:SetBackdropBorderColor(0,0,0,1)
-    ed.y:SetScript("OnEnterPressed", function() SaveAura(id) end)
+    ed.y:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     -- Duration / stacks checkboxes
     ed.duration = CreateFrame("Button", nil, ed)
@@ -419,7 +419,7 @@ function sA:EditAura(id)
     ed.duration:SetScript("OnClick", function(self)
       ed.duration.value = 1 - (ed.duration.value or 0)
       if ed.duration.value == 1 then ed.duration.checked:Show() else ed.duration.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
     ed.durationLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.durationLabel:SetPoint("LEFT", ed.duration, "RIGHT", 5, 0)
@@ -442,7 +442,7 @@ function sA:EditAura(id)
     ed.stacks:SetScript("OnClick", function(self)
       ed.stacks.value = 1 - (ed.stacks.value or 0)
       if ed.stacks.value == 1 then ed.stacks.checked:Show() else ed.stacks.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
     ed.stacksLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.stacksLabel:SetPoint("LEFT", ed.stacks, "RIGHT", 5, 0)
@@ -500,7 +500,7 @@ function sA:EditAura(id)
             ed.typeButton.text:SetText(text)
             aura.type = text
             menu:Hide()
-            SaveAura(id)
+            sA:SaveAura(id)
           end)
         end
         makeChoice("Buff", 1)
@@ -550,7 +550,7 @@ function sA:EditAura(id)
 			ed.unitButton.text:SetText(text)
 			aura.unit = text
 			menu:Hide()
-			SaveAura(id)
+			sA:SaveAura(id)
 		  end)
 		end
 		makeChoice("Player", 1)
@@ -578,7 +578,7 @@ function sA:EditAura(id)
     ed.lowduration:SetScript("OnClick", function(self)
       ed.lowduration.value = 1 - (ed.lowduration.value or 0)
       if ed.lowduration.value == 1 then ed.lowduration.checked:Show() else ed.lowduration.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
     ed.lowdurationLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.lowdurationLabel:SetPoint("LEFT", ed.lowduration, "RIGHT", 5, 0)
@@ -608,7 +608,7 @@ function sA:EditAura(id)
     ed.lowdurationvalue:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     ed.lowdurationvalue:SetBackdropColor(0.1,0.1,0.1,1)
     ed.lowdurationvalue:SetBackdropBorderColor(0,0,0,1)
-    ed.lowdurationvalue:SetScript("OnEnterPressed", function() SaveAura(id) end)
+    ed.lowdurationvalue:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     ed.lowdurationLabelsuffix = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.lowdurationLabelsuffix:SetPoint("LEFT", ed.lowdurationvalue, "RIGHT", 2, 0)
@@ -632,7 +632,7 @@ function sA:EditAura(id)
     ed.inCombat:SetScript("OnClick", function(self)
       ed.inCombat.value = 1 - (ed.inCombat.value or 0)
       if ed.inCombat.value == 1 then ed.inCombat.checked:Show() else ed.inCombat.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
 
     ed.incombatLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -657,7 +657,7 @@ function sA:EditAura(id)
     ed.outCombat:SetScript("OnClick", function(self)
       ed.outCombat.value = 1 - (ed.outCombat.value or 0)
       if ed.outCombat.value == 1 then ed.outCombat.checked:Show() else ed.outCombat.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
 
     ed.outcombatLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -682,7 +682,7 @@ function sA:EditAura(id)
     ed.invert:SetScript("OnClick", function(self)
       ed.invert.value = 1 - (ed.invert.value or 0)
       if ed.invert.value == 1 then ed.invert.checked:Show() else ed.invert.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
     ed.invertLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.invertLabel:SetPoint("LEFT", ed.invert, "RIGHT", 5, 0)
@@ -705,7 +705,7 @@ function sA:EditAura(id)
     ed.dual:SetScript("OnClick", function(self)
       ed.dual.value = 1 - (ed.dual.value or 0)
       if ed.dual.value == 1 then ed.dual.checked:Show() else ed.dual.checked:Hide() end
-	  SaveAura(id)
+	  sA:SaveAura(id)
     end)
     ed.dualLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.dualLabel:SetPoint("LEFT", ed.dual, "RIGHT", 5, 0)
@@ -831,7 +831,7 @@ function sA:EditAura(id)
 
   -- Editor button handlers
   ed.close:SetScript("OnClick", function() ed:Hide(); gui.editor = nil; sA.TestAura:Hide(); sA.TestAuraDual:Hide() end)
-  ed.copy:SetScript("OnClick", function() AddAura(id) end)
+  ed.copy:SetScript("OnClick", function() sA:AddAura(id) end)
 
   ed.delete:SetScript("OnClick", function()
     if ed.confirm then ed.confirm:Show(); return end
@@ -863,7 +863,7 @@ function sA:EditAura(id)
       ed.confirm:Hide()
       ed:Hide()
       gui.editor = nil
-      RefreshAuraList()
+      sA:RefreshAuraList()
       sA.TestAura:Hide()
       sA.TestAuraDual:Hide()
     end)
@@ -1041,7 +1041,7 @@ function sA:EditAura(id)
       if selectedTexture then
         ed.texturePath:SetText(selectedTexture)
         ed.browseFrame:Hide()
-        SaveAura(id)
+        sA:SaveAura(id)
       end
     end)
 	
@@ -1086,7 +1086,7 @@ function sA:EditAura(id)
 end
 
 -- Init
-RefreshAuraList()
+sA:RefreshAuraList()
 
 
 
