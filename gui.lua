@@ -197,8 +197,8 @@ function sA.SaveAura(id)
   data.lowdurationcolor= ed.lowdurationcolor
   data.unit            = ed.unitButton.text:GetText()
   data.type            = ed.typeButton.text:GetText()
-  data.inCombat        = ed.inCombat.value or 1
-  data.outCombat       = ed.outCombat.value or 1
+  data.inCombat        = ed.inCombat.value
+  data.outCombat       = ed.outCombat.value
   data.invert          = ed.invert.value
   data.dual            = ed.dual.value
 
@@ -1087,6 +1087,7 @@ end
 
 -- Init
 sA:RefreshAuraList()
+
 
 
 
