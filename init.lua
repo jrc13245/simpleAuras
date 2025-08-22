@@ -157,7 +157,7 @@ SlashCmdList["sA"] = function(msg)
 		else 
 			if gui:IsVisible() then gui:Hide() sA.TestAura:Hide() sA.TestAuraDual:Hide() else gui:Show() end
 		end
-		RefreshAuraList()
+		sA:RefreshAuraList()
 		return
 	end
 	
