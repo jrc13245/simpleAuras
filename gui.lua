@@ -94,7 +94,7 @@ closeBtn:SetScript("OnEnter", function() closeBtn:SetBackdropColor(0.5, 0.5, 0.5
 closeBtn:SetScript("OnLeave", function() closeBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
 -- Refresh list of configured auras
-function sA.RefreshAuraList()
+function sA:RefreshAuraList()
   for _, entry in ipairs(gui.list or {}) do entry:Hide() end
   gui.list = {}
 
@@ -179,7 +179,7 @@ function sA.RefreshAuraList()
 end
 
 -- Save aura data from editor
-function sA.SaveAura(id)
+function sA:SaveAura(id)
   local ed = gui.editor
   if not ed then return end
   local data = simpleAuras.auras[id]
@@ -218,7 +218,7 @@ function sA.SaveAura(id)
 end
 
 -- Add new aura (optionally copy from existing)
-function sA.AddAura(copyId)
+function sA:AddAura(copyId)
   table.insert(simpleAuras.auras, {})
   local newId = table.getn(simpleAuras.auras)
   if copyId and simpleAuras.auras[copyId] then
@@ -1087,9 +1087,3 @@ end
 
 -- Init
 sA:RefreshAuraList()
-
-
-
-
-
-
