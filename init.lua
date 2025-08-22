@@ -148,80 +148,81 @@ end)
 SLASH_sA1 = "/sa"
 SLASH_sA2 = "/simpleauras"
 SlashCmdList["sA"] = function(msg)
-  if type(msg) ~= "string" then msg = "" end
 
-  local cmd, val, fad
-  local _, _, a, b, c = string.find(msg, "^(%S+)%s*(%S*)%s*(%S*)$")
-  if a then cmd = a else cmd = "" end
-  if b then val = b else val = "" end
-  if c then fad = c else fad = "" end
+	-- Get Command
+	if type(msg) ~= "string" then
+		msg = ""
+	end
 
-  -- toggle / show / hide
-  if cmd == "" or cmd == "show" or cmd == "hide" then
-    if cmd == "show" then
-      if not gui:IsVisible() then gui:Show() end
-    elseif cmd == "hide" then
-      if gui:IsVisible() then gui:Hide(); if sA.TestAura then sA.TestAura:Hide() end; if sA.TestAuraDual then sA.TestAuraDual:Hide() end end
-    else
-      if gui:IsVisible() then gui:Hide(); if sA.TestAura then sA.TestAura:Hide() end; if sA.TestAuraDual then sA.TestAuraDual:Hide() end else gui:Show() end
-    end
-    sA:RefreshAuraList()
-    return
-  end
+	-- Get Command Arguments
+	local cmd, val
+	local s, e, a, b, c = string.find(msg, "^(%S+)%s*(%S*)%s*(%S*)$")
+	if a then cmd = a else cmd = "" end
+	if b then val = b else val = "" end
+	if c then fad = c else fad = "" end
+	
+	-- hide / show or no command
+	if cmd == "" or cmd == "show" or cmd == "hide" then
+		if cmd == "show" then
+			if not gui:IsVisible() then gui:Show() end
+		elseif cmd == "hide" then
+			if gui:IsVisible() then gui:Hide() sA.TestAura:Hide() sA.TestAuraDual:Hide() end
+		else 
+			if gui:IsVisible() then gui:Hide() sA.TestAura:Hide() sA.TestAuraDual:Hide() else gui:Show() end
+		end
+		sA:RefreshAuraList()
+		return
+	end
+	
+	-- refresh command
+	if cmd == "refresh" then
+		local num = tonumber(val)
+		if num and num >= 1 and num <= 10 then
+			simpleAuras.refresh = num
+			sA:Msg("Refresh set to " .. num .. " times per second")
+		else
+			sA:Msg("Usage: /sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
+			sA:Msg("Current refresh = " .. tostring(simpleAuras.refresh) .. " times per second")
+		end
+		return
+	end
+	
+	-- refresh command
+	if cmd == "update" then
+		local num = tonumber(val)
+		if num and num >= 0 and num <= 1 then
+			simpleAuras.updating = num
+			sA:Msg("Aura durations update status set to " .. num)
+		else
+			sA:Msg("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
+			sA:Msg("Current update status = " .. tostring(simpleAuras.updating))
+		end
+		return
+	end
+	
+	-- manual learning of durations
+	if cmd == "learn" then
+		if sA.SuperWoW then
+			local spell = tonumber(val)
+			local fade = tonumber(fad)
+			if spell and fade then
+				simpleAuras.auradurations[spell] = fade
+				sA:Msg("Set Duration of "..SpellInfo(spell).."("..spell..") to " .. fade .. " seconds.")
+			else
+				sA:Msg("/sa learn spellID Duration - manually set duration of spell.")
+			end
+		else
+			sA:Msg("/sa learn needs SuperWoW to be installed!")
+		end
+		return
+	end
+	
 
-  -- refresh rate
-  if cmd == "refresh" then
-    local num = tonumber(val)
-    if num and num >= 1 and num <= 10 then
-      simpleAuras.refresh = num
-      sA:Msg("Refresh set to " .. num .. " times per second")
-    else
-      sA:Msg("Usage: /sa refresh X — 1 to 10 updates per second (default: 5)")
-      sA:Msg("Current refresh = " .. tostring(simpleAuras.refresh))
-    end
-    return
-  end
+	-- help or unknown command fallback
+	sA:Msg("Usage:")
+	sA:Msg("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
+	sA:Msg("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
+	sA:Msg("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
+	sA:Msg("/sa learn X Y - manually set duration Y for aura with ID X.")
 
-  -- SuperWoW: enable live learning
-  if cmd == "update" then
-    if sA.SuperWoW then
-      local num = tonumber(val)
-      if num and num >= 0 and num <= 1 then
-        simpleAuras.updating = num
-        sA:Msg("Aura duration update status set to " .. num)
-      else
-        sA:Msg("Usage: /sa update X — 1=learn aura durations (default: 0)")
-        sA:Msg("Current update status = " .. tostring(simpleAuras.updating))
-      end
-    else
-      sA:Msg("/sa update requires SuperWoW!")
-    end
-    return
-  end
-
-  -- SuperWoW: manually set duration
-  if cmd == "learn" then
-    if sA.SuperWoW then
-      local spell = tonumber(val)
-      local fade  = tonumber(fad)
-      if spell and fade then
-        simpleAuras.auradurations[spell] = fade
-        sA:Msg("Set duration of " .. (SpellInfo(spell) or spell) .. " ("..spell..") to " .. fade .. " seconds.")
-      else
-        sA:Msg("Usage: /sa learn <spellID> <durationSeconds>")
-      end
-    else
-      sA:Msg("/sa learn requires SuperWoW!")
-    end
-    return
-  end
-
-  -- help
-  sA:Msg("Usage:")
-  sA:Msg("/sa, /sa show, /sa hide — open/close settings")
-  sA:Msg("/sa refresh X — 1..100 updates/sec (default: 5)")
-  if sA.SuperWoW then
-    sA:Msg("/sa update X — 1=learn aura durations (default: 0)")
-    sA:Msg("/sa learn <spellID> <duration>")
-  end
 end
