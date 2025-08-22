@@ -1,3 +1,12 @@
+-- Utility: skin frame with backdrop
+function sA:SkinFrame(frame, bg, border)
+  frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+  local bgr = bg or {0.1, 0.1, 0.1, 0.95}
+  local bdr = border or {0, 0, 0, 1}
+  frame:SetBackdropColor(bgr[1], bgr[2], bgr[3], bgr[4] or 1)
+  frame:SetBackdropBorderColor(bdr[1], bdr[2], bdr[3], bdr[4] or 1)
+end
+
 -- Deep copy helper
 local function deepCopy(tbl)
   local t = {}
