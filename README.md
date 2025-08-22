@@ -1,7 +1,7 @@
 # simpleAuras
 
 
-<img width="457" height="292" alt="image" src="https://github.com/user-attachments/assets/03f280cf-36ac-4139-ab03-1f26d70bf8ad" />
+<img width="508" height="322" alt="image" src="https://github.com/user-attachments/assets/15338563-4fbd-454c-9609-3d95f0214cc0" />
 
 
 ## Console Commands:
@@ -16,7 +16,7 @@
 
 
 ## Settings (/sa)
-<img width="817" height="539" alt="image" src="https://github.com/user-attachments/assets/6d9809da-b9d6-412b-8ca8-c7e4be413ac2" />
+<img width="814" height="537" alt="image" src="https://github.com/user-attachments/assets/6f4004b5-0f07-48b6-9c11-790b62aead3e" />
 
 ### Overview
 Shows all existing auras.
