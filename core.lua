@@ -190,6 +190,8 @@ function sA:UpdateAuras()
     if gui and gui.editor then gui.editor:Hide(); gui.editor = nil end
   end
 
+  local hasTarget = UnitExists("target")
+
   for id, aura in ipairs(simpleAuras.auras) do
     local show, icon, duration, stacks
     local currentDuration, currentStacks, currentDurationtext = 600, 20, ""
@@ -214,6 +216,11 @@ function sA:UpdateAuras()
       elseif aura.invert == 1 then
         show = 1 - (show or 0)
       end
+
+      if aura.unit == "Target" and hasTarget ~= 1 then
+        show = 0
+      end
+
     end
 
     local frame     = self.frames[id]     or CreateAuraFrame(id)
@@ -248,7 +255,7 @@ function sA:UpdateAuras()
       frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
       frame:SetFrameLevel(128 - id)
       frame:SetWidth(48 * scale)
-	  frame:SetHeight(48 * scale)
+	    frame:SetHeight(48 * scale)
       frame.texture:SetTexture(aura.texture)
       frame.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
       frame.stackstext:SetText((aura.stacks == 1) and currentStacks or "")
@@ -282,7 +289,7 @@ function sA:UpdateAuras()
         dualframe:SetPoint("CENTER", UIParent, "CENTER", -(aura.xpos or 0), aura.ypos or 0)
         dualframe:SetFrameLevel(128 - id)
         dualframe:SetWidth(48 * scale)
-		dualframe:SetHeight(48 * scale)
+		    dualframe:SetHeight(48 * scale)
         dualframe.texture:SetTexture(aura.texture)
         if aura.type == "Cooldown" and currentDuration then
           dualframe.texture:SetVertexColor(r * 0.5, g * 0.5, b * 0.5, alpha)
