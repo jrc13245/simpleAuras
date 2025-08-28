@@ -2,7 +2,7 @@
 simpleAuras = simpleAuras or {}
 
 -- runtime only
-sA = sA or { auraTimers = {}, frames = {}, dualframes = {} }
+sA = sA or { auraTimers = {}, frames = {}, dualframes = {}, draggers = {} }
 sA.SuperWoW = SetAutoloot and true or false
 -- Эти переменные больше не нужны, так как статус определяется в UpdateAuras
 -- sAinCombat = nil
@@ -126,6 +126,25 @@ end
 -- Timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 sAEvent:SetScript("OnUpdate", function()
+  -- Cache the UI scale in a safe context
+  sA.uiScale = UIParent:GetEffectiveScale()
+
+  -- Handle Move Mode with Ctrl Key
+  local mainFrame = _G["sAGUI"]
+  if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() then
+    -- Continuously show draggers for any visible frames while in move mode
+    for id, frame in pairs(sA.frames) do
+      if frame:IsVisible() and sA.draggers[id] then
+        sA.draggers[id]:Show()
+      end
+    end
+  else
+    -- Hide all draggers when not in move mode
+    for id, dragger in pairs(sA.draggers) do
+      if dragger then dragger:Hide() end
+    end
+  end
+
   local time = GetTime()
   local refreshRate = 1 / (simpleAuras.refresh or 5)
   if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end

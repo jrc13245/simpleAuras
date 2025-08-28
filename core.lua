@@ -178,6 +178,9 @@ local FONT = "Fonts\\FRIZQT__.TTF"
 local function CreateAuraFrame(id)
   local f = CreateFrame("Frame", "sAAura" .. id, UIParent)
   f:SetFrameStrata("BACKGROUND")
+  f:SetMovable(true)
+  f:SetClampedToScreen(true)
+  f:SetUserPlaced(true) -- Tell WoW that this frame's position is managed by the user
 
   f.texture = f:CreateTexture(nil, "BACKGROUND")
   f.texture:SetAllPoints(f)
@@ -191,6 +194,45 @@ local function CreateAuraFrame(id)
   f.stackstext:SetPoint("TOPLEFT", f.durationtext, "CENTER", 1, -6)
 
   return f
+end
+
+local function CreateDraggerFrame(id, auraFrame)
+  local dragger = CreateFrame("Frame", "sADragger" .. id, auraFrame)
+  dragger:SetAllPoints(auraFrame)
+  dragger:SetFrameStrata("HIGH")
+  dragger:EnableMouse(true)
+  dragger:RegisterForDrag("LeftButton")
+
+  dragger:SetScript("OnDragStart", function(self)
+    auraFrame:StartMoving()
+  end)
+
+  dragger:SetScript("OnDragStop", function(self)
+    auraFrame:StopMovingOrSizing()
+    
+    -- We must calculate the offset from the screen's center because
+    -- SetPoint uses a center-based coordinate system, while GetPoint
+    -- returns coordinates from a corner anchor. This mismatch
+    -- was causing auras to fly off-screen after being moved.
+    local frameX, frameY = auraFrame:GetCenter()
+    local screenWidth, screenHeight = GetScreenWidth(), GetScreenHeight()
+    
+    local offsetX = frameX - (screenWidth / 2)
+    local offsetY = frameY - (screenHeight / 2)
+
+    -- Round coordinates to prevent floating point issues in SavedVariables
+    simpleAuras.auras[id].xpos = math.floor(offsetX + 0.5)
+    simpleAuras.auras[id].ypos = math.floor(offsetY + 0.5)
+  end)
+  
+  -- Add a border to make it visible
+  dragger:SetBackdrop({
+    edgeFile = "Interface\\Buttons\\WHITE8x8",
+    edgeSize = 1,
+  })
+  dragger:SetBackdropBorderColor(0, 1, 0, 0.5) -- Green, semi-transparent
+  dragger:Hide()
+  return dragger
 end
 
 local function CreateDualFrame(id)
@@ -221,6 +263,13 @@ function sA:UpdateAuras()
     local show, icon, duration, stacks
     local currentDuration, currentStacks, currentDurationtext = 600, 20, ""
 
+    local frame     = self.frames[id]     or CreateAuraFrame(id)
+    local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
+    local dragger   = self.draggers[id]   or CreateDraggerFrame(id, frame)
+    self.frames[id] = frame
+    self.draggers[id] = dragger
+    if aura.dual == 1 and aura.type ~= "Cooldown" then self.dualframes[id] = dualframe end
+    
     if self:ShouldAuraBeActive(aura, inCombat, inRaid, inParty) then
       if aura.unit == "Target" and not hasTarget then
         show = 0
@@ -248,12 +297,18 @@ function sA:UpdateAuras()
       end
     end
     
-    local frame     = self.frames[id]     or CreateAuraFrame(id)
-    local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
-    self.frames[id] = frame
-    if aura.dual == 1 and aura.type ~= "Cooldown" then self.dualframes[id] = dualframe end
-    
-    local shouldShow = (show == 1 or (gui and gui:IsVisible())) and not (gui and gui.editor and gui.editor:IsVisible())
+    local mainFrame = _G["sAGUI"]
+    local editorFrame = _G["sAEdit"]
+    local isEnabled = (aura.enabled == nil or aura.enabled == 1)
+    local shouldShow
+
+    if mainFrame and mainFrame:IsVisible() then
+      -- In config mode (/sa is open), show all ENABLED auras
+      shouldShow = isEnabled and not (editorFrame and editorFrame:IsVisible())
+    else
+      -- In normal mode, only show triggered auras (the 'show' variable already implies it's enabled)
+      shouldShow = (show == 1) and not (editorFrame and editorFrame:IsVisible())
+    end
 
     if aura.unit == "Target" and not hasTarget then
       shouldShow = false
