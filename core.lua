@@ -179,6 +179,7 @@ local function CreateAuraFrame(id)
   local f = CreateFrame("Frame", "sAAura" .. id, UIParent)
   f:SetFrameStrata("BACKGROUND")
   f:SetMovable(true)
+  f:SetClampedToScreen(true)
 
   f.texture = f:CreateTexture(nil, "BACKGROUND")
   f.texture:SetAllPoints(f)
@@ -207,9 +208,17 @@ local function CreateDraggerFrame(id, auraFrame)
 
   dragger:SetScript("OnDragStop", function(self)
     auraFrame:StopMovingOrSizing()
-    local _, _, _, x, y = auraFrame:GetPoint()
-    simpleAuras.auras[id].xpos = x
-    simpleAuras.auras[id].ypos = y
+    
+    -- Calculate the offset from the screen's center, independent of UI scale
+    local frameX, frameY = auraFrame:GetCenter()
+    local screenWidth, screenHeight = GetScreenWidth(), GetScreenHeight()
+    
+    local offsetX = frameX - (screenWidth / 2)
+    local offsetY = frameY - (screenHeight / 2)
+
+    -- Round coordinates to prevent floating point issues in SavedVariables
+    simpleAuras.auras[id].xpos = math.floor(offsetX + 0.5)
+    simpleAuras.auras[id].ypos = math.floor(offsetY + 0.5)
   end)
   
   -- Add a border to make it visible
@@ -284,12 +293,17 @@ function sA:UpdateAuras()
       end
     end
     
-    local frame     = self.frames[id]     or CreateAuraFrame(id)
-    local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
-    self.frames[id] = frame
-    if aura.dual == 1 and aura.type ~= "Cooldown" then self.dualframes[id] = dualframe end
-    
-    local shouldShow = (show == 1 or (gui and gui:IsVisible())) and not (gui and gui.editor and gui.editor:IsVisible())
+    local mainFrame = _G["sAGUI"]
+    local editorFrame = _G["sAEdit"]
+    local shouldShow
+
+    if mainFrame and mainFrame:IsVisible() then
+      -- In config mode (/sa is open), show all auras to allow moving them
+      shouldShow = not (editorFrame and editorFrame:IsVisible())
+    else
+      -- In normal mode, only show triggered auras
+      shouldShow = (show == 1) and not (editorFrame and editorFrame:IsVisible())
+    end
 
     if aura.unit == "Target" and not hasTarget then
       shouldShow = false

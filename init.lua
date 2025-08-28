@@ -126,6 +126,29 @@ end
 -- Timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 sAEvent:SetScript("OnUpdate", function()
+  -- Cache the UI scale in a safe context
+  sA.uiScale = UIParent:GetEffectiveScale()
+
+  -- Handle Move Mode with Ctrl Key
+  local mainFrame = _G["sAGUI"]
+  if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() then
+    if not sA.moveMode then -- Enter move mode
+      sA.moveMode = true
+      for id, frame in pairs(sA.frames) do
+        if frame:IsVisible() and sA.draggers[id] then
+          sA.draggers[id]:Show()
+        end
+      end
+    end
+  else
+    if sA.moveMode then -- Exit move mode
+      sA.moveMode = false
+      for id, dragger in pairs(sA.draggers) do
+        if dragger then dragger:Hide() end
+      end
+    end
+  end
+
   local time = GetTime()
   local refreshRate = 1 / (simpleAuras.refresh or 5)
   if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
@@ -198,28 +221,6 @@ SlashCmdList["sA"] = function(msg)
 		return
 	end
 	
-	-- move command
-	if cmd == "move" then
-		sA.moveMode = true
-		for id, frame in pairs(sA.frames) do
-			if frame:IsVisible() and sA.draggers[id] then
-				sA.draggers[id]:Show()
-			end
-		end
-		sA:Msg("Move mode enabled.")
-		return
-	end
-
-	-- unmove command
-	if cmd == "unmove" then
-		sA.moveMode = false
-		for id, dragger in pairs(sA.draggers) do
-			dragger:Hide()
-		end
-		sA:Msg("Move mode disabled.")
-		return
-	end
-	
 	-- refresh command
 	if cmd == "refresh" then
 		local num = tonumber(val)
@@ -267,8 +268,6 @@ SlashCmdList["sA"] = function(msg)
 	-- help or unknown command fallback
 	sA:Msg("Usage:")
 	sA:Msg("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
-	sA:Msg("/sa move - Enable moving auras.")
-	sA:Msg("/sa unmove - Disable moving auras.")
 	sA:Msg("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
 	sA:Msg("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
 	sA:Msg("/sa learn X Y - manually set duration Y for aura with ID X.")
