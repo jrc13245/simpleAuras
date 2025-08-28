@@ -84,6 +84,32 @@ addBtn:SetScript("OnClick", function() sA:AddAura() end)
 addBtn:SetScript("OnEnter", function() addBtn:SetBackdropColor(0.1, 0.4, 0.1, 1) end)
 addBtn:SetScript("OnLeave", function() addBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
+-- Export All button
+local exportAllBtn = CreateFrame("Button", nil, gui)
+exportAllBtn:SetPoint("TOPLEFT", addBtn, "TOPRIGHT", 5, 0)
+exportAllBtn:SetWidth(20)
+exportAllBtn:SetHeight(20)
+sA:SkinFrame(exportAllBtn, {0.2, 0.2, 0.2, 1})
+exportAllBtn.text = exportAllBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+exportAllBtn.text:SetPoint("CENTER", exportAllBtn, "CENTER", 0, 0)
+exportAllBtn.text:SetText("E")
+exportAllBtn:SetScript("OnClick", function() sA:ExportAllAuras() end)
+exportAllBtn:SetScript("OnEnter", function() exportAllBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+exportAllBtn:SetScript("OnLeave", function() exportAllBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+
+-- Import button
+local importBtn = CreateFrame("Button", nil, gui)
+importBtn:SetPoint("TOPLEFT", exportAllBtn, "TOPRIGHT", 5, 0)
+importBtn:SetWidth(20)
+importBtn:SetHeight(20)
+sA:SkinFrame(importBtn, {0.2, 0.2, 0.2, 1})
+importBtn.text = importBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+importBtn.text:SetPoint("CENTER", importBtn, "CENTER", 0, 0)
+importBtn.text:SetText("I")
+importBtn:SetScript("OnClick", function() sA:ShowImportFrame() end)
+importBtn:SetScript("OnEnter", function() importBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+importBtn:SetScript("OnLeave", function() importBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+
 -- Close button
 local closeBtn = CreateFrame("Button", nil, gui)
 closeBtn:SetPoint("TOPRIGHT", -2, -2)
@@ -846,6 +872,18 @@ function sA:EditAura(id)
     ed.copy:SetScript("OnEnter", function() ed.copy:SetBackdropColor(0.1,0.4,0.1,1) end)
     ed.copy:SetScript("OnLeave", function() ed.copy:SetBackdropColor(0.2,0.2,0.2,1) end)
 
+    -- Export Single button
+    ed.export = CreateFrame("Button", nil, ed)
+    ed.export:SetPoint("TOPLEFT", ed.copy, "TOPRIGHT", 5, 0)
+    ed.export:SetWidth(20)
+    ed.export:SetHeight(20)
+    sA:SkinFrame(ed.export, {0.2,0.2,0.2,1})
+    ed.export.text = ed.export:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.export.text:SetPoint("CENTER", 0.5, 1)
+    ed.export.text:SetText("E")
+    ed.export:SetScript("OnEnter", function() ed.export:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.export:SetScript("OnLeave", function() ed.export:SetBackdropColor(0.2,0.2,0.2,1) end)
+
     gui.editor = ed
   end
 
@@ -894,6 +932,8 @@ function sA:EditAura(id)
   if ed.invert.value == 1 then ed.invert.checked:Show() else ed.invert.checked:Hide() end
   ed.dual.value = aura.dual or 0
   if ed.dual.value == 1 then ed.dual.checked:Show() else ed.dual.checked:Hide() end
+
+  ed.export:SetScript("OnClick", function() sA:ExportSingleAura(id) end)
 
   -- Show Test aura(s)
   sA.TestAura:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
@@ -1183,6 +1223,238 @@ function sA:EditAura(id)
 
   -- ensure editor visible
   ed:Show()
+end
+
+-------------------------------------------------
+-- Import/Export Functions (Custom Implementation)
+-------------------------------------------------
+
+local function serializeValue(val)
+    local vtype = type(val)
+    if vtype == "string" then
+        return string.format("%q", val)
+    elseif vtype == "number" or vtype == "boolean" then
+        return tostring(val)
+    elseif vtype == "table" then
+        local parts = {}
+        for k, v in pairs(val) do
+            -- Keys must also be serialized correctly
+            local keyStr = serializeValue(k)
+            local valStr = serializeValue(v)
+            if valStr ~= "nil" then -- Don't save nil values
+                table.insert(parts, string.format("[%s]=%s", keyStr, valStr))
+            end
+        end
+        return "{" .. table.concat(parts, ",") .. "}"
+    else
+        return "nil"
+    end
+end
+
+local function Serialize(data)
+    if type(data) ~= "table" then return nil end
+    return "return " .. serializeValue(data)
+end
+
+local function Deserialize(str)
+    if not str or type(str) ~= "string" or str == "" then
+        return false, "Invalid input string"
+    end
+
+    local func, err = loadstring(str)
+    if not func then
+        return false, "Syntax error: " .. (err or "unknown")
+    end
+
+    -- Use pcall to safely execute the loaded string
+    local success, result = pcall(func)
+    if not success then
+        return false, "Execution error: " .. (result or "unknown")
+    end
+
+    return true, result
+end
+
+function sA:ShowExportFrame(exportString)
+    if not exportString then
+        sA:Msg("Nothing to export.")
+        return
+    end
+    
+    local frame = _G["sAExportFrame"]
+    if not frame then
+        frame = CreateFrame("Frame", "sAExportFrame", UIParent)
+        frame:SetFrameStrata("DIALOG")
+        frame:SetPoint("CENTER", 0, 0)
+        frame:SetWidth(400)
+        frame:SetHeight(200)
+        sA:SkinFrame(frame)
+        frame:SetMovable(true)
+        frame:EnableMouse(true)
+        frame:RegisterForDrag("LeftButton")
+        frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+        frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+        local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        title:SetPoint("TOP", 0, -10)
+        title:SetText("Exported Aura String")
+
+        local scroll = CreateFrame("ScrollFrame", "sAExportScrollFrame", frame, "UIPanelScrollFrameTemplate")
+        scroll:SetPoint("TOPLEFT", 15, -30)
+        scroll:SetPoint("BOTTOMRIGHT", -35, 40)
+
+        local editBox = CreateFrame("EditBox", "sAExportEditBox", scroll)
+        editBox:SetMultiLine(true)
+        editBox:SetAutoFocus(false)
+        editBox:SetFontObject(GameFontHighlightSmall)
+        editBox:SetWidth(340)
+        editBox:SetHeight(120)
+        scroll:SetScrollChild(editBox)
+        
+        local closeBtn = CreateFrame("Button", "sAExportCloseButton", frame)
+        closeBtn:SetPoint("BOTTOM", 0, 15)
+        closeBtn:SetWidth(80)
+        closeBtn:SetHeight(22)
+        sA:SkinFrame(closeBtn, {0.2, 0.2, 0.2, 1})
+        closeBtn.text = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        closeBtn.text:SetPoint("CENTER", 0, 1)
+        closeBtn.text:SetText("Close")
+        closeBtn:SetScript("OnClick", function() frame:Hide() end)
+        closeBtn:SetScript("OnEnter", function() closeBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+        closeBtn:SetScript("OnLeave", function() closeBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    end
+
+    local editBox = _G["sAExportEditBox"]
+    editBox:SetText(exportString)
+    editBox:SetFocus()
+    editBox:HighlightText()
+    frame:Show()
+end
+
+function sA:ExportAllAuras()
+    local exportTable = {}
+    for _, aura in ipairs(simpleAuras.auras) do
+        table.insert(exportTable, deepCopy(aura))
+    end
+    
+    local serialized = Serialize(exportTable)
+    if serialized then
+        sA:ShowExportFrame(serialized)
+    else
+        sA:Msg("Error during serialization.")
+    end
+end
+
+function sA:ExportSingleAura(id)
+    local auraToExport = deepCopy(simpleAuras.auras[id])
+    local serialized = Serialize(auraToExport)
+
+    if serialized then
+        sA:ShowExportFrame(serialized)
+    else
+        sA:Msg("Error during serialization.")
+    end
+end
+
+function sA:ShowImportFrame()
+    local frame = _G["sAImportFrame"]
+    if not frame then
+        frame = CreateFrame("Frame", "sAImportFrame", UIParent)
+        frame:SetFrameStrata("DIALOG")
+        frame:SetPoint("CENTER", 0, 0)
+        frame:SetWidth(400)
+        frame:SetHeight(200)
+        sA:SkinFrame(frame)
+        frame:SetMovable(true)
+        frame:EnableMouse(true)
+        frame:RegisterForDrag("LeftButton")
+        frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+        frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+        local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        title:SetPoint("TOP", 0, -10)
+        title:SetText("Paste Aura String to Import")
+        
+        local scroll = CreateFrame("ScrollFrame", "sAImportScrollFrame", frame, "UIPanelScrollFrameTemplate")
+        scroll:SetPoint("TOPLEFT", 15, -30)
+        scroll:SetPoint("BOTTOMRIGHT", -35, 70)
+
+        local editBox = CreateFrame("EditBox", "sAImportEditBox", scroll)
+        editBox:SetMultiLine(true)
+        editBox:SetAutoFocus(true)
+        editBox:SetFontObject(GameFontHighlightSmall)
+        editBox:SetWidth(340)
+        editBox:SetHeight(90)
+        scroll:SetScrollChild(editBox)
+
+        local importBtn = CreateFrame("Button", "sAImportImportButton", frame)
+        importBtn:SetPoint("BOTTOMLEFT", 40, 15)
+        importBtn:SetWidth(80)
+        importBtn:SetHeight(22)
+        sA:SkinFrame(importBtn, {0.2, 0.2, 0.2, 1})
+        importBtn.text = importBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        importBtn.text:SetPoint("CENTER", 0, 1)
+        importBtn.text:SetText("Import")
+        importBtn:SetScript("OnClick", function()
+            sA:ImportAuras(_G["sAImportEditBox"]:GetText())
+            frame:Hide()
+        end)
+        importBtn:SetScript("OnEnter", function() importBtn:SetBackdropColor(0.1, 0.4, 0.1, 1) end)
+        importBtn:SetScript("OnLeave", function() importBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+        
+        local cancelBtn = CreateFrame("Button", "sAImportCancelButton", frame)
+        cancelBtn:SetPoint("BOTTOMRIGHT", -40, 15)
+        cancelBtn:SetWidth(80)
+        cancelBtn:SetHeight(22)
+        sA:SkinFrame(cancelBtn, {0.2, 0.2, 0.2, 1})
+        cancelBtn.text = cancelBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        cancelBtn.text:SetPoint("CENTER", 0, 1)
+        cancelBtn.text:SetText("Cancel")
+        cancelBtn:SetScript("OnClick", function() frame:Hide() end)
+        cancelBtn:SetScript("OnEnter", function() cancelBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+        cancelBtn:SetScript("OnLeave", function() cancelBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    end
+    
+    _G["sAImportEditBox"]:SetText("")
+    frame:Show()
+end
+
+function sA:ImportAuras(importString)
+    if not importString or importString == "" then return end
+
+    local success, data = Deserialize(importString)
+
+    if not success then
+        sA:Msg("Error: Invalid import string.")
+        DEFAULT_CHAT_FRAME:AddMessage("|cFFFF0000sA Import Error: |r" .. tostring(data))
+        return
+    end
+
+    if type(data) ~= "table" then
+        sA:Msg("Error: Import data is not a valid table.")
+        return
+    end
+
+    local importedCount = 0
+    -- Check if it's a single aura (a table of settings) or multiple auras (an array of tables)
+    if data[1] and type(data[1]) == "table" then -- It's likely an array of auras
+        for _, auraData in ipairs(data) do
+            if type(auraData) == "table" then
+                table.insert(simpleAuras.auras, auraData)
+                importedCount = importedCount + 1
+            end
+        end
+    else -- It's likely a single aura
+        table.insert(simpleAuras.auras, data)
+        importedCount = 1
+    end
+
+    if importedCount > 0 then
+        sA:Msg(importedCount .. " aura(s) imported successfully.")
+        sA:RefreshAuraList()
+    else
+        sA:Msg("No valid auras found in the import string.")
+    end
 end
 
 -- Init
