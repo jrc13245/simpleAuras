@@ -9,7 +9,8 @@ sAParent:SetFrameStrata("BACKGROUND")
 sAParent:SetAllPoints(UIParent)
 
 function sA:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
-  if not aura or aura.name == "" then return false end
+  -- This check is now more robust and will correctly filter out new, empty auras.
+  if not aura or not aura.name or aura.name == "" then return false end
 
   local enabled = (aura.enabled == nil or aura.enabled == 1)
   if not enabled then return false end
@@ -19,13 +20,13 @@ function sA:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
   local raidCheck = aura.inRaid == 1
   local partyCheck = aura.inParty == 1
 
-  -- Если хотя бы одна из опций выбрана, проверяем условия по "ИЛИ"
+  -- If any condition is met, show
   if (combatCheck and inCombat) then return true end
   if (outCombatCheck and not inCombat) then return true end
   if (raidCheck and inRaid) then return true end
   if (partyCheck and inParty) then return true end
 
-  -- Если ни одно из условий не выполнилось, ауру не показываем
+  -- If conditions are set but none are met, don't show
   return false
 end
 
@@ -260,140 +261,175 @@ function sA:UpdateAuras()
   local inParty = UnitInParty("player") and not inRaid
 
   for id, aura in ipairs(simpleAuras.auras) do
-    local show, icon, duration, stacks
-    local currentDuration, currentStacks, currentDurationtext = 600, 20, ""
+    -- Add a guard clause to skip invalid/empty auras completely.
+    -- This prevents errors when a new, unconfigured aura exists.
+    if aura and aura.name and aura.name ~= "" then
+      local show, icon, duration, stacks
+      local currentDuration, currentStacks, currentDurationtext
 
-    local frame     = self.frames[id]     or CreateAuraFrame(id)
-    local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
-    local dragger   = self.draggers[id]   or CreateDraggerFrame(id, frame)
-    self.frames[id] = frame
-    self.draggers[id] = dragger
-    if aura.dual == 1 and aura.type ~= "Cooldown" then self.dualframes[id] = dualframe end
-    
-    if self:ShouldAuraBeActive(aura, inCombat, inRaid, inParty) then
-      if aura.unit == "Target" and not hasTarget then
-        show = 0
+      local frame     = self.frames[id]     or CreateAuraFrame(id)
+      local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
+      local dragger   = self.draggers[id]   or CreateDraggerFrame(id, frame)
+      self.frames[id] = frame
+      self.draggers[id] = dragger
+      if aura.dual == 1 and aura.type ~= "Cooldown" then self.dualframes[id] = dualframe end
+      
+      local mainFrame = _G["sAGUI"]
+      local editorFrame = _G["sAEdit"]
+      local isEnabled = (aura.enabled == nil or aura.enabled == 1)
+      local shouldShow
+
+      if mainFrame and mainFrame:IsVisible() then
+        -- SCENARIO 2 & 3: CONFIG or EDIT MODE
+        -- Show all ENABLED auras, unless the editor is open for a DIFFERENT aura.
+        shouldShow = isEnabled and not (editorFrame and editorFrame:IsVisible())
       else
-        if sA.SuperWoW then
-          icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
-        else
-          icon, duration, stacks = self:GetAuraInfos(aura.name, aura.unit, aura.type)
+        -- SCENARIO 1: NORMAL GAMEPLAY MODE
+        local conditionsMet = self:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
+        show = 0 -- Default to not showing
+        
+        if conditionsMet then
+          -- Check for target existence if required by the aura
+          local targetCheckPassed = (aura.unit ~= "Target" or hasTarget)
+          
+          if targetCheckPassed then
+            -- Get aura data (icon indicates presence)
+            if sA.SuperWoW then
+                icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
+            else
+                icon, duration, stacks = self:GetAuraInfos(aura.name, aura.unit, aura.type)
+            end
+            
+            local auraIsPresent = icon and 1 or 0
+            
+            -- Apply inversion logic
+            if aura.type == "Cooldown" then
+              local onCooldown = duration and duration > 0
+              if aura.dual == 1 then
+                show = onCooldown and 1 or 0
+              elseif aura.invert == 1 then
+                show = not onCooldown and 1 or 0
+              else -- Normal cooldown should show when it's running
+                show = onCooldown and 1 or 0
+              end
+            elseif aura.invert == 1 then
+              show = 1 - auraIsPresent
+            else
+              show = auraIsPresent
+            end
+          end
         end
+        
+        shouldShow = (show == 1)
+      end
+      
+      -- This handles hiding the aura if the editor for it is open
+      if editorFrame and editorFrame:IsVisible() and sA.auraEditingId and sA.auraEditingId ~= id then
+          shouldShow = false
+      end
 
-        if icon then
-          show = 1
-          currentDuration = duration
-          currentStacks = stacks
-          if aura.autodetect == 1 and aura.texture ~= icon then
-            aura.texture, simpleAuras.auras[id].texture = icon, icon
+      if shouldShow then
+        -- Get fresh aura data only if we are going to show it
+        if not icon then -- Data might not have been fetched in /sa mode
+          if sA.SuperWoW then
+            icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
+          else
+            icon, duration, stacks = self:GetAuraInfos(aura.name, aura.unit, aura.type)
           end
         end
 
-        if aura.type == "Cooldown" then
-          show = (aura.invert == 1 and not currentDuration) or (aura.dual == 1 and currentDuration) and 1 or 0
-        elseif aura.invert == 1 then
-          show = 1 - (show or 0)
+        if icon then
+          currentDuration = duration
+          currentStacks = stacks
+          if aura.autodetect == 1 and aura.texture ~= icon then
+              aura.texture, simpleAuras.auras[id].texture = icon, icon
+          end
         end
-      end
-    end
-    
-    local mainFrame = _G["sAGUI"]
-    local editorFrame = _G["sAEdit"]
-    local isEnabled = (aura.enabled == nil or aura.enabled == 1)
-    local shouldShow
-
-    if mainFrame and mainFrame:IsVisible() then
-      -- In config mode (/sa is open), show all ENABLED auras
-      shouldShow = isEnabled and not (editorFrame and editorFrame:IsVisible())
-    else
-      -- In normal mode, only show triggered auras (the 'show' variable already implies it's enabled)
-      shouldShow = (show == 1) and not (editorFrame and editorFrame:IsVisible())
-    end
-
-    if aura.unit == "Target" and not hasTarget then
-      shouldShow = false
-    end
-    
-    if shouldShow then
-      -------------------------------------------------
-      -- Duration text
-      -------------------------------------------------
-      if aura.duration == 1 and currentDuration then
-        if currentDuration > 100 then
-          currentDurationtext = floor(currentDuration / 60 + 0.5) .. "m"
-        elseif currentDuration <= (aura.lowdurationvalue or 5) then
-          currentDurationtext = format("%.1f", floor(currentDuration * 10 + 0.5) / 10)
-        else
-          currentDurationtext = floor(currentDuration + 0.5)
+        
+        -------------------------------------------------
+        -- Duration text
+        -------------------------------------------------
+        if aura.duration == 1 and currentDuration then
+          if currentDuration > 100 then
+            currentDurationtext = floor(currentDuration / 60 + 0.5) .. "m"
+          elseif currentDuration <= (aura.lowdurationvalue or 5) then
+            currentDurationtext = format("%.1f", floor(currentDuration * 10 + 0.5) / 10)
+          else
+            currentDurationtext = floor(currentDuration + 0.5)
+          end
         end
-      end
 
-      if currentDurationtext == "0.0" then
-        currentDurationtext = 0
-      elseif currentDurationtext == "0" then
-        currentDurationtext = "learning..."
-      end
+        if currentDurationtext == "0.0" then
+          currentDurationtext = 0
+        elseif currentDurationtext == "0" then
+          currentDurationtext = "learning..."
+        end
 
-      -------------------------------------------------
-      -- Apply visuals
-      -------------------------------------------------
-      local scale = aura.scale or 1
-      frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
-      frame:SetFrameLevel(128 - id)
-      frame:SetWidth(48 * scale)
-	    frame:SetHeight(48 * scale)
-      frame.texture:SetTexture(aura.texture)
-      frame.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
-      frame.stackstext:SetText((aura.stacks == 1) and currentStacks or "")
-      if aura.duration == 1 then frame.durationtext:SetFont(FONT, 20 * scale, "OUTLINE") end
-      if aura.stacks   == 1 then frame.stackstext:SetFont(FONT, 14 * scale, "OUTLINE") end
+        -------------------------------------------------
+        -- Apply visuals
+        -------------------------------------------------
+        local scale = aura.scale or 1
+        frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
+        frame:SetFrameLevel(128 - id)
+        frame:SetWidth(48 * scale)
+  	    frame:SetHeight(48 * scale)
+        frame.texture:SetTexture(aura.texture)
+        frame.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
+        frame.stackstext:SetText((aura.stacks == 1) and currentStacks or "")
+        if aura.duration == 1 then frame.durationtext:SetFont(FONT, 20 * scale, "OUTLINE") end
+        if aura.stacks   == 1 then frame.stackstext:SetFont(FONT, 14 * scale, "OUTLINE") end
 
-      local color = (aura.lowduration == 1 and currentDuration and currentDuration <= aura.lowdurationvalue)
-        and (aura.lowdurationcolor or {1, 0, 0, 1})
-        or  (aura.auracolor or {1, 1, 1, 1})
+        local color = (aura.lowduration == 1 and currentDuration and currentDuration <= aura.lowdurationvalue)
+          and (aura.lowdurationcolor or {1, 0, 0, 1})
+          or  (aura.auracolor or {1, 1, 1, 1})
 
-      local r, g, b, alpha = unpack(color)
-      if aura.type == "Cooldown" and currentDuration then
-        frame.texture:SetVertexColor(r * 0.5, g * 0.5, b * 0.5, alpha)
-      else
-        frame.texture:SetVertexColor(r, g, b, alpha)
-      end
-
-      local durationcolor = {1.0, 0.82, 0.0, alpha}
-      local stackcolor    = {1, 1, 1, alpha}
-      if (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown") and (currentDuration and currentDuration <= (aura.lowdurationvalue or 5)) then
-        durationcolor = {1, 0, 0, alpha}
-      end
-      frame.durationtext:SetTextColor(unpack(durationcolor))
-      frame.stackstext:SetTextColor(unpack(stackcolor))
-      frame:Show()
-
-      -------------------------------------------------
-      -- Dual frame
-      -------------------------------------------------
-      if aura.dual == 1 and aura.type ~= "Cooldown" and dualframe then
-        dualframe:SetPoint("CENTER", UIParent, "CENTER", -(aura.xpos or 0), aura.ypos or 0)
-        dualframe:SetFrameLevel(128 - id)
-        dualframe:SetWidth(48 * scale)
-		    dualframe:SetHeight(48 * scale)
-        dualframe.texture:SetTexture(aura.texture)
+        local r, g, b, alpha = unpack(color)
         if aura.type == "Cooldown" and currentDuration then
-          dualframe.texture:SetVertexColor(r * 0.5, g * 0.5, b * 0.5, alpha)
+          frame.texture:SetVertexColor(r * 0.5, g * 0.5, b * 0.5, alpha)
         else
-          dualframe.texture:SetVertexColor(r, g, b, alpha)
+          frame.texture:SetVertexColor(r, g, b, alpha)
         end
-        dualframe.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
-        dualframe.stackstext:SetText((aura.stacks == 1) and currentStacks or "")
-        if aura.duration == 1 then dualframe.durationtext:SetFont(FONT, 20 * scale, "OUTLINE") end
-        if aura.stacks   == 1 then dualframe.stackstext:SetFont(FONT, 14 * scale, "OUTLINE") end
-        dualframe.durationtext:SetTextColor(unpack(durationcolor))
-        dualframe:Show()
-      elseif dualframe then
-        dualframe:Hide()
+
+        local durationcolor = {1.0, 0.82, 0.0, alpha}
+        local stackcolor    = {1, 1, 1, alpha}
+        if (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown") and (currentDuration and currentDuration <= (aura.lowdurationvalue or 5)) then
+          durationcolor = {1, 0, 0, alpha}
+        end
+        frame.durationtext:SetTextColor(unpack(durationcolor))
+        frame.stackstext:SetTextColor(unpack(stackcolor))
+        frame:Show()
+
+        -------------------------------------------------
+        -- Dual frame
+        -------------------------------------------------
+        if aura.dual == 1 and aura.type ~= "Cooldown" and dualframe then
+          dualframe:SetPoint("CENTER", UIParent, "CENTER", -(aura.xpos or 0), aura.ypos or 0)
+          dualframe:SetFrameLevel(128 - id)
+          dualframe:SetWidth(48 * scale)
+  		    dualframe:SetHeight(48 * scale)
+          dualframe.texture:SetTexture(aura.texture)
+          if aura.type == "Cooldown" and currentDuration then
+            dualframe.texture:SetVertexColor(r * 0.5, g * 0.5, b * 0.5, alpha)
+          else
+            dualframe.texture:SetVertexColor(r, g, b, alpha)
+          end
+          dualframe.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
+          dualframe.stackstext:SetText((aura.stacks == 1) and currentStacks or "")
+          if aura.duration == 1 then dualframe.durationtext:SetFont(FONT, 20 * scale, "OUTLINE") end
+          if aura.stacks   == 1 then dualframe.stackstext:SetFont(FONT, 14 * scale, "OUTLINE") end
+          dualframe.durationtext:SetTextColor(unpack(durationcolor))
+          dualframe:Show()
+        elseif dualframe then
+          dualframe:Hide()
+        end
+      else
+        if frame     then frame:Hide()     end
+        if dualframe then dualframe:Hide() end
       end
     else
-      if frame     then frame:Hide()     end
-      if dualframe then dualframe:Hide() end
+      -- This is a new/empty aura, make sure its frame is hidden if it exists
+      if self.frames[id] then self.frames[id]:Hide() end
+      if self.dualframes[id] then self.dualframes[id]:Hide() end
     end
   end
 end
