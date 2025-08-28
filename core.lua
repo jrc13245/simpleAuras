@@ -19,15 +19,41 @@ function sA:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
   local outCombatCheck = aura.outCombat == 1
   local raidCheck = aura.inRaid == 1
   local partyCheck = aura.inParty == 1
+  
+  -- Rule: If no conditions are set at all, the aura should never be active.
+  local anyConditionSet = combatCheck or outCombatCheck or raidCheck or partyCheck
+  if not anyConditionSet then
+      return false
+  end
 
-  -- If any condition is met, show
-  if (combatCheck and inCombat) then return true end
-  if (outCombatCheck and not inCombat) then return true end
-  if (raidCheck and inRaid) then return true end
-  if (partyCheck and inParty) then return true end
+  -- Part 1: Evaluate Combat State requirement
+  local combatStateOK = false
+  local combatStateRequired = combatCheck or outCombatCheck
+  if not combatStateRequired then
+      -- If no combat condition is specified, it's considered met.
+      combatStateOK = true
+  else
+      -- If a combat condition IS specified, check if it's met.
+      if (combatCheck and inCombat) or (outCombatCheck and not inCombat) then
+          combatStateOK = true
+      end
+  end
 
-  -- If conditions are set but none are met, don't show
-  return false
+  -- Part 2: Evaluate Group State requirement
+  local groupStateOK = false
+  local groupStateRequired = raidCheck or partyCheck
+  if not groupStateRequired then
+      -- If no group condition is specified, it's considered met.
+      groupStateOK = true
+  else
+      -- If a group condition IS specified, check if it's met.
+      if (raidCheck and inRaid) or (partyCheck and inParty) then
+          groupStateOK = true
+      end
+  end
+
+  -- Final Decision: Both categories of conditions must be met.
+  return combatStateOK and groupStateOK
 end
 
 -------------------------------------------------
