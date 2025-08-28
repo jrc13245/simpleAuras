@@ -4,7 +4,10 @@ simpleAuras = simpleAuras or {}
 -- runtime only
 sA = sA or { auraTimers = {}, frames = {}, dualframes = {} }
 sA.SuperWoW = SetAutoloot and true or false
-sAinCombat = nil
+-- Эти переменные больше не нужны, так как статус определяется в UpdateAuras
+-- sAinCombat = nil
+-- sAInRaid = nil
+-- sAInParty = nil
 
 -- perf: cache globals we use a lot (Lua 5.0-safe)
 local gsub   = string.gsub
@@ -141,6 +144,27 @@ sACombat:SetScript("OnEvent", function()
     sAinCombat = nil
   end
 end)
+
+--[[ -- Этот блок больше не нужен, логика перенесена в core.lua
+-- Raid and Party state
+local sAStatus = CreateFrame("Frame")
+sAStatus:RegisterEvent("PARTY_MEMBERS_CHANGED")
+sAStatus:RegisterEvent("PLAYER_ENTERING_WORLD") -- To check on login
+sAStatus:SetScript("OnEvent", function()
+  -- Check for Raid
+  if UnitInRaid("player") then
+    sAInRaid = true
+  else
+    sAInRaid = nil
+  end
+  -- Check for Party (but not in a raid, as raid is also a party)
+  if UnitInParty("player") and not UnitInRaid("player") then
+    sAInParty = true
+  else
+    sAInParty = nil
+  end
+end)
+]]
 
 ---------------------------------------------------
 -- Slash Commands

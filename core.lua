@@ -8,6 +8,27 @@ local sAParent = CreateFrame("Frame", "sAParentFrame", UIParent)
 sAParent:SetFrameStrata("BACKGROUND")
 sAParent:SetAllPoints(UIParent)
 
+function sA:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
+  if not aura or aura.name == "" then return false end
+
+  local enabled = (aura.enabled == nil or aura.enabled == 1)
+  if not enabled then return false end
+
+  local combatCheck = aura.inCombat == 1
+  local outCombatCheck = aura.outCombat == 1
+  local raidCheck = aura.inRaid == 1
+  local partyCheck = aura.inParty == 1
+
+  -- Если хотя бы одна из опций выбрана, проверяем условия по "ИЛИ"
+  if (combatCheck and inCombat) then return true end
+  if (outCombatCheck and not inCombat) then return true end
+  if (raidCheck and inRaid) then return true end
+  if (partyCheck and inParty) then return true end
+
+  -- Если ни одно из условий не выполнилось, ауру не показываем
+  return false
+end
+
 -------------------------------------------------
 -- Cooldown info by spell name
 -------------------------------------------------
@@ -190,45 +211,55 @@ function sA:UpdateAuras()
     if gui and gui.editor then gui.editor:Hide(); gui.editor = nil end
   end
 
+  -- Получаем актуальный статус игрока один раз за цикл
   local hasTarget = UnitExists("target")
+  local inCombat = UnitAffectingCombat("player")
+  local inRaid = UnitInRaid("player")
+  local inParty = UnitInParty("player") and not inRaid
 
   for id, aura in ipairs(simpleAuras.auras) do
     local show, icon, duration, stacks
     local currentDuration, currentStacks, currentDurationtext = 600, 20, ""
 
-    -- only process if aura is enabled
-    if aura.name ~= "" and ((aura.inCombat == 1 and sAinCombat) or (aura.outCombat == 1 and not sAinCombat)) then
-      if sA.SuperWoW then
-        icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
+    if self:ShouldAuraBeActive(aura, inCombat, inRaid, inParty) then
+      if aura.unit == "Target" and not hasTarget then
+        show = 0
       else
-        icon, duration, stacks = self:GetAuraInfos(aura.name, aura.unit, aura.type)
-      end
+        if sA.SuperWoW then
+          icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
+        else
+          icon, duration, stacks = self:GetAuraInfos(aura.name, aura.unit, aura.type)
+        end
 
-      if icon then
-        show, currentDuration, currentStacks = 1, duration, stacks
-        if aura.autodetect == 1 and aura.texture ~= icon then
-          aura.texture, simpleAuras.auras[id].texture = icon, icon
+        if icon then
+          show = 1
+          currentDuration = duration
+          currentStacks = stacks
+          if aura.autodetect == 1 and aura.texture ~= icon then
+            aura.texture, simpleAuras.auras[id].texture = icon, icon
+          end
+        end
+
+        if aura.type == "Cooldown" then
+          show = (aura.invert == 1 and not currentDuration) or (aura.dual == 1 and currentDuration) and 1 or 0
+        elseif aura.invert == 1 then
+          show = 1 - (show or 0)
         end
       end
-
-      if aura.type == "Cooldown" then
-        show = (aura.invert == 1 and not currentDuration) or (aura.dual == 1 and currentDuration) and 1 or 0
-      elseif aura.invert == 1 then
-        show = 1 - (show or 0)
-      end
-
-      if aura.unit == "Target" and hasTarget ~= 1 then
-        show = 0
-      end
-
     end
-
+    
     local frame     = self.frames[id]     or CreateAuraFrame(id)
     local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
     self.frames[id] = frame
     if aura.dual == 1 and aura.type ~= "Cooldown" then self.dualframes[id] = dualframe end
+    
+    local shouldShow = (show == 1 or (gui and gui:IsVisible())) and not (gui and gui.editor and gui.editor:IsVisible())
 
-    if (show == 1 or (gui and gui:IsVisible())) and not (gui and gui.editor and gui.editor:IsVisible()) then
+    if aura.unit == "Target" and not hasTarget then
+      shouldShow = false
+    end
+    
+    if shouldShow then
       -------------------------------------------------
       -- Duration text
       -------------------------------------------------
