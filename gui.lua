@@ -115,12 +115,22 @@ function sA:RefreshAuraList()
     row:SetPoint("TOPLEFT", 20, -30 - (id - 1) * 22)
     sA:SkinFrame(row, {0.2, 0.2, 0.2, 1})
     row:SetScript("OnEnter", function() row:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
-    row:SetScript("OnLeave", function() row:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    
+    if aura.enabled == 0 then
+      row:SetScript("OnLeave", function() row:SetBackdropColor(0.4, 0.1, 0.1, 1) end)
+    else
+      row:SetScript("OnLeave", function() row:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    end
 
     row.text = row:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     row.text:SetPoint("LEFT", 5, 0)
     row.text:SetText("[" .. id .. "] " .. (aura.name ~= "" and aura.name or "<unnamed>"))
-    row.text:SetTextColor(unpack(aura.auracolor or {1, 1, 1}))
+    row.text:SetTextColor(unpack(aura.auracolor or {1, 1, 1})) -- Aura color or white for enabled
+   
+    if aura.enabled == 0 then
+      row:SetBackdropColor(0.4, 0.1, 0.1, 1) -- Reddish for disabled
+    end
+    
     row:SetScript("OnClick", function()
       if gui.editor then
         if sA.TestAura then sA.TestAura:Hide() end
@@ -193,6 +203,7 @@ function sA:SaveAura(id)
   if not ed then return end
   local data = simpleAuras.auras[id]
   data.name            = ed.name:GetText()
+  data.enabled         = ed.enabled.value
   data.auracolor       = ed.auracolor
   data.autodetect      = ed.autoDetect.value
   data.texture         = ed.texturePath:GetText()
@@ -208,6 +219,8 @@ function sA:SaveAura(id)
   data.type            = ed.typeButton.text:GetText()
   data.inCombat        = ed.inCombat.value
   data.outCombat       = ed.outCombat.value
+  data.inRaid          = ed.inRaid.value
+  data.inParty         = ed.inParty.value
   data.invert          = ed.invert.value
   data.dual            = ed.dual.value
 
@@ -268,6 +281,30 @@ function sA:EditAura(id)
     ed.title = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.title:SetPoint("TOP", ed, "TOP", 0, -5)
 
+    -- Enabled Checkbox
+    ed.enabled = CreateFrame("Button", nil, ed)
+    ed.enabled:SetWidth(16)
+    ed.enabled:SetHeight(16)
+    ed.enabled:SetPoint("TOPLEFT", ed, "TOPLEFT", 12.5, -20)
+    sA:SkinFrame(ed.enabled, {0.15,0.15,0.15,1})
+    ed.enabled:SetScript("OnEnter", function() ed.enabled:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.enabled:SetScript("OnLeave", function() ed.enabled:SetBackdropColor(0.15,0.15,0.15,1) end)
+    ed.enabled.checked = ed.enabled:CreateTexture(nil, "OVERLAY")
+    ed.enabled.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+    ed.enabled.checked:SetVertexColor(1, 0.8, 0.06, 1)
+    ed.enabled.checked:SetPoint("CENTER", ed.enabled, "CENTER", 0, 0)
+    ed.enabled.checked:SetWidth(7)
+    ed.enabled.checked:SetHeight(7)
+    ed.enabled.value = 1
+    ed.enabled:SetScript("OnClick", function(self)
+      ed.enabled.value = 1 - (ed.enabled.value or 0)
+      if ed.enabled.value == 1 then ed.enabled.checked:Show() else ed.enabled.checked:Hide() end
+	  sA:SaveAura(id)
+    end)
+    ed.enabledLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.enabledLabel:SetPoint("LEFT", ed.enabled, "RIGHT", 5, 0)
+    ed.enabledLabel:SetText("Enabled")
+ 
     -- Name
     ed.nameLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.nameLabel:SetPoint("TOPLEFT", ed, "TOPLEFT", 12.5, -40)
@@ -673,6 +710,54 @@ function sA:EditAura(id)
     ed.outcombatLabel:SetPoint("LEFT", ed.outCombat, "RIGHT", 5, 1)
     ed.outcombatLabel:SetText("Out of Combat")
 
+    -- In Raid checkbox
+    ed.inRaid = CreateFrame("Button", nil, ed)
+    ed.inRaid:SetWidth(16)
+    ed.inRaid:SetHeight(16)
+    ed.inRaid:SetPoint("TOPLEFT", ed.inCombat, "BOTTOMLEFT", 0, -5) -- Position below "In Combat"
+    sA:SkinFrame(ed.inRaid, {0.15,0.15,0.15,1})
+    ed.inRaid:SetScript("OnEnter", function() ed.inRaid:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.inRaid:SetScript("OnLeave", function() ed.inRaid:SetBackdropColor(0.15,0.15,0.15,1) end)
+    ed.inRaid.checked = ed.inRaid:CreateTexture(nil, "OVERLAY")
+    ed.inRaid.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+    ed.inRaid.checked:SetVertexColor(1, 0.8, 0.06, 1)
+    ed.inRaid.checked:SetPoint("CENTER", ed.inRaid, "CENTER", 0, 0)
+    ed.inRaid.checked:SetWidth(7)
+    ed.inRaid.checked:SetHeight(7)
+    ed.inRaid.value = 0
+    ed.inRaid:SetScript("OnClick", function(self)
+      ed.inRaid.value = 1 - (ed.inRaid.value or 0)
+      if ed.inRaid.value == 1 then ed.inRaid.checked:Show() else ed.inRaid.checked:Hide() end
+	  sA:SaveAura(id)
+    end)
+    ed.inraidLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.inraidLabel:SetPoint("LEFT", ed.inRaid, "RIGHT", 5, 1)
+    ed.inraidLabel:SetText("In Raid")
+
+    -- In Party checkbox
+    ed.inParty = CreateFrame("Button", nil, ed)
+    ed.inParty:SetWidth(16)
+    ed.inParty:SetHeight(16)
+    ed.inParty:SetPoint("LEFT", ed.inraidLabel, "RIGHT", 20, 0) -- Position next to "In Raid"
+    sA:SkinFrame(ed.inParty, {0.15,0.15,0.15,1})
+    ed.inParty:SetScript("OnEnter", function() ed.inParty:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.inParty:SetScript("OnLeave", function() ed.inParty:SetBackdropColor(0.15,0.15,0.15,1) end)
+    ed.inParty.checked = ed.inParty:CreateTexture(nil, "OVERLAY")
+    ed.inParty.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+    ed.inParty.checked:SetVertexColor(1, 0.8, 0.06, 1)
+    ed.inParty.checked:SetPoint("CENTER", ed.inParty, "CENTER", 0, 0)
+    ed.inParty.checked:SetWidth(7)
+    ed.inParty.checked:SetHeight(7)
+    ed.inParty.value = 0
+    ed.inParty:SetScript("OnClick", function(self)
+      ed.inParty.value = 1 - (ed.inParty.value or 0)
+      if ed.inParty.value == 1 then ed.inParty.checked:Show() else ed.inParty.checked:Hide() end
+	  sA:SaveAura(id)
+    end)
+    ed.inpartyLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.inpartyLabel:SetPoint("LEFT", ed.inParty, "RIGHT", 5, 1)
+    ed.inpartyLabel:SetText("In Party")
+
     -- Invert / Dual
     ed.invert = CreateFrame("Button", nil, ed)
     ed.invert:SetWidth(16)
@@ -766,6 +851,8 @@ function sA:EditAura(id)
 
   -- Populate fields with aura values
   ed.title:SetText("[" .. tostring(id) .. "] " .. (aura.name ~= "" and aura.name or "<unnamed>"))
+  ed.enabled.value = aura.enabled or 1
+  if ed.enabled.value == 1 then ed.enabled.checked:Show() else ed.enabled.checked:Hide() end
   ed.name:SetText(aura.name or "")
   ed.auracolor = aura.auracolor or {1,1,1,1}
   ed.auracolorpicker = ed.auracolorpicker -- ensure exists
@@ -799,6 +886,10 @@ function sA:EditAura(id)
   if ed.inCombat.value == 1 then ed.inCombat.checked:Show() else ed.inCombat.checked:Hide() end
   ed.outCombat.value = aura.outCombat or 0
   if ed.outCombat.value == 1 then ed.outCombat.checked:Show() else ed.outCombat.checked:Hide() end
+  ed.inRaid.value = aura.inRaid or 0
+  if ed.inRaid.value == 1 then ed.inRaid.checked:Show() else ed.inRaid.checked:Hide() end
+  ed.inParty.value = aura.inParty or 0
+  if ed.inParty.value == 1 then ed.inParty.checked:Show() else ed.inParty.checked:Hide() end
   ed.invert.value = aura.invert or 0
   if ed.invert.value == 1 then ed.invert.checked:Show() else ed.invert.checked:Hide() end
   ed.dual.value = aura.dual or 0
