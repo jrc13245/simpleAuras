@@ -180,6 +180,7 @@ local function CreateAuraFrame(id)
   f:SetFrameStrata("BACKGROUND")
   f:SetMovable(true)
   f:SetClampedToScreen(true)
+  f:SetUserPlaced(true) -- Tell WoW that this frame's position is managed by the user
 
   f.texture = f:CreateTexture(nil, "BACKGROUND")
   f.texture:SetAllPoints(f)
@@ -209,7 +210,10 @@ local function CreateDraggerFrame(id, auraFrame)
   dragger:SetScript("OnDragStop", function(self)
     auraFrame:StopMovingOrSizing()
     
-    -- Calculate the offset from the screen's center, independent of UI scale
+    -- We must calculate the offset from the screen's center because
+    -- SetPoint uses a center-based coordinate system, while GetPoint
+    -- returns coordinates from a corner anchor. This mismatch
+    -- was causing auras to fly off-screen after being moved.
     local frameX, frameY = auraFrame:GetCenter()
     local screenWidth, screenHeight = GetScreenWidth(), GetScreenHeight()
     
@@ -295,13 +299,14 @@ function sA:UpdateAuras()
     
     local mainFrame = _G["sAGUI"]
     local editorFrame = _G["sAEdit"]
+    local isEnabled = (aura.enabled == nil or aura.enabled == 1)
     local shouldShow
 
     if mainFrame and mainFrame:IsVisible() then
-      -- In config mode (/sa is open), show all auras to allow moving them
-      shouldShow = not (editorFrame and editorFrame:IsVisible())
+      -- In config mode (/sa is open), show all ENABLED auras
+      shouldShow = isEnabled and not (editorFrame and editorFrame:IsVisible())
     else
-      -- In normal mode, only show triggered auras
+      -- In normal mode, only show triggered auras (the 'show' variable already implies it's enabled)
       shouldShow = (show == 1) and not (editorFrame and editorFrame:IsVisible())
     end
 

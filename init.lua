@@ -132,20 +132,16 @@ sAEvent:SetScript("OnUpdate", function()
   -- Handle Move Mode with Ctrl Key
   local mainFrame = _G["sAGUI"]
   if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() then
-    if not sA.moveMode then -- Enter move mode
-      sA.moveMode = true
-      for id, frame in pairs(sA.frames) do
-        if frame:IsVisible() and sA.draggers[id] then
-          sA.draggers[id]:Show()
-        end
+    -- Continuously show draggers for any visible frames while in move mode
+    for id, frame in pairs(sA.frames) do
+      if frame:IsVisible() and sA.draggers[id] then
+        sA.draggers[id]:Show()
       end
     end
   else
-    if sA.moveMode then -- Exit move mode
-      sA.moveMode = false
-      for id, dragger in pairs(sA.draggers) do
-        if dragger then dragger:Hide() end
-      end
+    -- Hide all draggers when not in move mode
+    for id, dragger in pairs(sA.draggers) do
+      if dragger then dragger:Hide() end
     end
   end
 
