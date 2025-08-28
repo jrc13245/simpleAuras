@@ -115,12 +115,22 @@ function sA:RefreshAuraList()
     row:SetPoint("TOPLEFT", 20, -30 - (id - 1) * 22)
     sA:SkinFrame(row, {0.2, 0.2, 0.2, 1})
     row:SetScript("OnEnter", function() row:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
-    row:SetScript("OnLeave", function() row:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    
+    if aura.enabled == 0 then
+      row:SetScript("OnLeave", function() row:SetBackdropColor(0.4, 0.1, 0.1, 1) end)
+    else
+      row:SetScript("OnLeave", function() row:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    end
 
     row.text = row:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     row.text:SetPoint("LEFT", 5, 0)
     row.text:SetText("[" .. id .. "] " .. (aura.name ~= "" and aura.name or "<unnamed>"))
-    row.text:SetTextColor(unpack(aura.auracolor or {1, 1, 1}))
+    row.text:SetTextColor(unpack(aura.auracolor or {1, 1, 1})) -- Aura color or white for enabled
+   
+    if aura.enabled == 0 then
+      row:SetBackdropColor(0.4, 0.1, 0.1, 1) -- Reddish for disabled
+    end
+    
     row:SetScript("OnClick", function()
       if gui.editor then
         if sA.TestAura then sA.TestAura:Hide() end
