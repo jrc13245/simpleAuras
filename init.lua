@@ -2,9 +2,12 @@
 simpleAuras = simpleAuras or {}
 
 -- runtime only
-sA = sA or { auraTimers = {}, frames = {}, dualframes = {} }
+sA = sA or { auraTimers = {}, frames = {}, dualframes = {}, draggers = {} }
 sA.SuperWoW = SetAutoloot and true or false
-sAinCombat = nil
+-- Эти переменные больше не нужны, так как статус определяется в UpdateAuras
+-- sAinCombat = nil
+-- sAInRaid = nil
+-- sAInParty = nil
 
 -- perf: cache globals we use a lot (Lua 5.0-safe)
 local gsub   = string.gsub
@@ -123,6 +126,25 @@ end
 -- Timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 sAEvent:SetScript("OnUpdate", function()
+  -- Cache the UI scale in a safe context
+  sA.uiScale = UIParent:GetEffectiveScale()
+
+  -- Handle Move Mode with Ctrl Key
+  local mainFrame = _G["sAGUI"]
+  if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() then
+    -- Continuously show draggers for any visible frames while in move mode
+    for id, frame in pairs(sA.frames) do
+      if frame:IsVisible() and sA.draggers[id] then
+        sA.draggers[id]:Show()
+      end
+    end
+  else
+    -- Hide all draggers when not in move mode
+    for id, dragger in pairs(sA.draggers) do
+      if dragger then dragger:Hide() end
+    end
+  end
+
   local time = GetTime()
   local refreshRate = 1 / (simpleAuras.refresh or 5)
   if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
@@ -141,6 +163,27 @@ sACombat:SetScript("OnEvent", function()
     sAinCombat = nil
   end
 end)
+
+--[[ -- Этот блок больше не нужен, логика перенесена в core.lua
+-- Raid and Party state
+local sAStatus = CreateFrame("Frame")
+sAStatus:RegisterEvent("PARTY_MEMBERS_CHANGED")
+sAStatus:RegisterEvent("PLAYER_ENTERING_WORLD") -- To check on login
+sAStatus:SetScript("OnEvent", function()
+  -- Check for Raid
+  if UnitInRaid("player") then
+    sAInRaid = true
+  else
+    sAInRaid = nil
+  end
+  -- Check for Party (but not in a raid, as raid is also a party)
+  if UnitInParty("player") and not UnitInRaid("player") then
+    sAInParty = true
+  else
+    sAInParty = nil
+  end
+end)
+]]
 
 ---------------------------------------------------
 -- Slash Commands

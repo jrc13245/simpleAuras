@@ -16,17 +16,23 @@
 
 
 ## Settings (/sa)
-<img width="814" height="537" alt="image" src="https://github.com/user-attachments/assets/6f4004b5-0f07-48b6-9c11-790b62aead3e" />
+<img width="834" height="556" alt="image" src="https://github.com/user-attachments/assets/4bd31bcb-7fb2-43be-9030-1c139130b879" />
 
 ### Overview
 Shows all existing auras.
 
 - [+] / Add Aura: Creates a new, blank aura.
+- [I] / Import: Opens a window to import one or multiple auras from a text string.
+- [E] / Export: Exports all your auras into a single text string.
 - v / ^: Sort aura priority (higher in the list = will be shown over other auras below)
+- Movable Auras: While this window is open, you can move any visible aura by holding down the `Ctrl` key and dragging it.
 
 
 ### Aura-Editor
 Shows the currently edited aura only.
+
+Enabled/Disabled:
+- A master toggle at the top of the editor to quickly turn an aura on or off. Disabled auras are highlighted in red in the main list.
 
 Aura/Spellname Name:
 - Name of the aura to track (has to be exactly the same name)
@@ -47,6 +53,7 @@ Conditions:
 - Low Duration Color*: If the auracolor should change at or below "lowduration"
 - Low Duration in secs*: Allways active, changes durationcolor to red if at or below, also changes color if activated.
 - In/Out of Combat: When aura should be shown
+- In Raid / In Party: Restricts the aura to only be active when you are in a raid or party (but not a raid).
 
 Buff/Debuff:
 - Invert: Activate to show aura if not found.
@@ -59,6 +66,7 @@ Cooldown:
 
 Other:
 - [c] / Copy: Copies the aura.
+- [E] / Export: Exports only the current aura into a text string.
 - Delete: Deletes the aura after confirmation.
 
 \* = For these functions to work on targets SuperWoW is REQUIRED!
