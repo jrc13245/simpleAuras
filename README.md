@@ -25,7 +25,7 @@ Shows all existing auras.
 - [I] / Import: Opens a window to import one or multiple auras from a text string.
 - [E] / Export: Exports all your auras into a single text string.
 - v / ^: Sort aura priority (higher in the list = will be shown over other auras below)
-- Movable Auras: While this window is open, you can move any visible aura by holding down the `Ctrl` key and dragging it.
+- Movable Auras: While in settings, you can move any visible aura by holding down `Ctrl`+`Alt`+`Shift` keys and dragging it.
 
 
 ### Aura-Editor
