@@ -131,18 +131,50 @@ sAEvent:SetScript("OnUpdate", function()
 
   -- Handle Move Mode with Ctrl Key
   local mainFrame = _G["sAGUI"]
-  if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() then
-    -- Continuously show draggers for any visible frames while in move mode
-    for id, frame in pairs(sA.frames) do
-      if frame:IsVisible() and sA.draggers[id] then
-        sA.draggers[id]:Show()
-      end
-    end
+  if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() and IsAltKeyDown() and IsShiftKeyDown() then
+  
+	-- TestAura
+	if sA.TestAura and sA.TestAura:IsVisible() then
+	
+		sA.draggers[0]:Show()
+		gui:SetAlpha(0)
+		gui.editor:SetAlpha(0)
+		
+	else
+  
+		-- Continuously show draggers for any visible frames while in move mode
+		for id, frame in pairs(sA.frames) do
+		  if frame:IsVisible() and sA.draggers[id] then
+			sA.draggers[id]:Show()
+			gui:SetAlpha(0)
+			if gui.editor then
+			  gui.editor:SetAlpha(0)
+			end
+		  end
+		end
+		
+	end
+	
   else
-    -- Hide all draggers when not in move mode
+	
+	-- Hide all draggers when not in move mode
     for id, dragger in pairs(sA.draggers) do
-      if dragger then dragger:Hide() end
+      if dragger then
+		dragger:Hide()
+        gui:SetAlpha(1)
+		if gui.editor then
+          gui.editor:SetAlpha(1)
+		end
+	  end
     end
+	
+	-- Reload data if in editor
+	if gui.editor and gui.auraEdit and sA.draggers[0] and sA.draggers[0]:IsVisible() then
+		
+		sA:SaveAura(gui.auraEdit)
+		
+	end
+	
   end
 
   local time = GetTime()
@@ -163,27 +195,6 @@ sACombat:SetScript("OnEvent", function()
     sAinCombat = nil
   end
 end)
-
---[[ -- Этот блок больше не нужен, логика перенесена в core.lua
--- Raid and Party state
-local sAStatus = CreateFrame("Frame")
-sAStatus:RegisterEvent("PARTY_MEMBERS_CHANGED")
-sAStatus:RegisterEvent("PLAYER_ENTERING_WORLD") -- To check on login
-sAStatus:SetScript("OnEvent", function()
-  -- Check for Raid
-  if UnitInRaid("player") then
-    sAInRaid = true
-  else
-    sAInRaid = nil
-  end
-  -- Check for Party (but not in a raid, as raid is also a party)
-  if UnitInParty("player") and not UnitInRaid("player") then
-    sAInParty = true
-  else
-    sAInParty = nil
-  end
-end)
-]]
 
 ---------------------------------------------------
 -- Slash Commands
@@ -206,6 +217,7 @@ SlashCmdList["sA"] = function(msg)
 	
 	-- hide / show or no command
 	if cmd == "" or cmd == "show" or cmd == "hide" then
+		if gui.auraEdit then gui.auraEdit = nil end
 		if cmd == "show" then
 			if not gui:IsVisible() then gui:Show() end
 		elseif cmd == "hide" then
