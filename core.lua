@@ -209,7 +209,7 @@ local function CreateAuraFrame(id)
   f:SetClampedToScreen(true)
   f:SetUserPlaced(true) -- Tell WoW that this frame's position is managed by the user
 
-  f.texture = f:CreateTexture(nil, "BACKGROUND")
+  f.texture = f:CreateTexture(nil, "ARTWORK")
   f.texture:SetAllPoints(f)
 
   f.durationtext = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -305,7 +305,7 @@ function sA:UpdateAuras()
     -- This prevents errors when a new, unconfigured aura exists.
     if aura and aura.name then
       local show, icon, duration, stacks
-      local currentDuration, currentStacks, currentDurationtext
+      local currentDuration, currentStacks, currentDurationtext = 600, 20, ""
 
       local frame     = self.frames[id]     or CreateAuraFrame(id)
       local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
@@ -385,9 +385,11 @@ function sA:UpdateAuras()
         -- Duration text
         -------------------------------------------------
         if aura.duration == 1 and currentDuration then
-          if currentDuration > 100 then
+          if sA.learnNew and sA.learnNew == 1 then
+			currentDurationtext = "learn"
+          elseif currentDuration > 100 then
             currentDurationtext = floor(currentDuration / 60 + 0.5) .. "m"
-          elseif currentDuration <= (aura.lowdurationvalue or 5) then
+		  elseif currentDuration <= (aura.lowdurationvalue or 5) then
             currentDurationtext = format("%.1f", floor(currentDuration * 10 + 0.5) / 10)
           else
             currentDurationtext = floor(currentDuration + 0.5)
@@ -396,8 +398,6 @@ function sA:UpdateAuras()
 
         if currentDurationtext == "0.0" then
           currentDurationtext = 0
-        elseif currentDurationtext == "0" then
-          currentDurationtext = "learning..."
         end
 
         -------------------------------------------------
