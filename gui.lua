@@ -26,7 +26,7 @@ function sA:CreateTestAuras()
 	local TestAura = CreateFrame("Frame", "sATest", UIParent)
 	TestAura:SetFrameStrata("BACKGROUND")
 	TestAura:SetFrameLevel(128)
-	TestAura.texture = TestAura:CreateTexture(nil, "BACKGROUND")
+	TestAura.texture = TestAura:CreateTexture(nil, "ARTWORK")
 	TestAura.texture:SetAllPoints(TestAura)
 	TestAura.durationtext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	TestAura.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
@@ -83,7 +83,7 @@ function sA:CreateTestAuras()
 	local TestAuraDual = CreateFrame("Frame", "sATestDual", UIParent)
 	TestAuraDual:SetFrameStrata("BACKGROUND")
 	TestAuraDual:SetFrameLevel(128)
-	TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "BACKGROUND")
+	TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "ARTWORK")
 	TestAuraDual.texture:SetAllPoints(TestAuraDual)
 	TestAuraDual.durationtext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	TestAuraDual.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
@@ -333,7 +333,7 @@ function sA:AddAura(copyId)
   if copyId and simpleAuras.auras[copyId] then
     simpleAuras.auras[newId] = deepCopy(simpleAuras.auras[copyId])
   else
-    simpleAuras.auras[newId] = { name = "", texture = "Interface\\Icons\\INV_Misc_QuestionMark", inCombat = 1, outCombat = 1 }
+    simpleAuras.auras[newId] = {["dual"]=0,["scale"]=1,["inParty"]=0,["unit"]="Player",["stacks"]=0,["showCD"]="Always",["invert"]=0,["texture"]="Interface\\Icons\\INV_Misc_QuestionMark",["enabled"]=1,["type"]="Buff",["inRaid"]=0,["ypos"]=0,["inCombat"]=1,["outCombat"]=1,["autodetect"]=0,["auracolor"]={[1]=1,[2]=1,[3]=1,[4]=1},["name"]="",["lowduration"]=0,["lowdurationcolor"]={[1]=1,[2]=0,[3]=0,[4]=1},["xpos"]=0,["duration"]=0,["lowdurationvalue"]=5}
   end
   if gui.editor and gui.editor:IsShown() then
     gui.editor:Hide()
@@ -414,7 +414,7 @@ function sA:EditAura(id)
     ed.name:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     -- Separator
-    local lineone = ed:CreateTexture(nil, "ARTWORK")
+    local lineone = ed:CreateTexture(nil, "OVERLAY")
     lineone:SetTexture("Interface\\Buttons\\WHITE8x8")
     lineone:SetVertexColor(1, 0.8, 0.06, 1)
     lineone:SetPoint("TOPLEFT", ed.nameLabel, "BOTTOMLEFT", 0, -15)
@@ -585,7 +585,7 @@ function sA:EditAura(id)
     ed.stacksLabel:SetText("Show Stacks")
 
     -- Conditions (unit / type)
-    local linetwo = ed:CreateTexture(nil, "ARTWORK")
+    local linetwo = ed:CreateTexture(nil, "OVERLAY")
     linetwo:SetTexture("Interface\\Buttons\\WHITE8x8")
     linetwo:SetVertexColor(1, 0.8, 0.06, 1)
     linetwo:SetPoint("TOPLEFT", ed.duration, "BOTTOMLEFT", 0, -15)
@@ -1271,7 +1271,7 @@ function sA:EditAura(id)
       btn:SetWidth(size)
       btn:SetHeight(size)
       btn:SetPoint("TOPLEFT", col * (size + padding) + 22, -row * (size + padding))
-      local tex = btn:CreateTexture(nil, "BACKGROUND")
+      local tex = btn:CreateTexture(nil, "ARTWORK")
       tex:SetAllPoints(btn)
       tex:SetTexture("Interface\\AddOns\\simpleAuras\\Auras\\Aura" .. i)
       btn.texturePath = "Interface\\AddOns\\simpleAuras\\Auras\\Aura" .. i
