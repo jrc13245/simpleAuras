@@ -79,6 +79,7 @@ if sA.SuperWoW then
               local castTime = ActiveCasts[targetGUID][spellID]
               local actual   = timestamp - castTime
               simpleAuras.auradurations[spellID] = floor(actual + 0.5)
+			  sA.learnNew = nil
               if simpleAuras.updating == 1 then
                 sA:Msg("Updated duration for " .. spellName .. " ("..spellID..") to: " .. floor(actual + 0.5) .. "s")
               end
@@ -114,7 +115,8 @@ if sA.SuperWoW then
         ActiveCasts[targetGUID] = ActiveCasts[targetGUID] or {}
         ActiveCasts[targetGUID][spellID] = timestamp
         sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
-        sA.auraTimers[targetGUID][spellID] = 0
+        sA.auraTimers[targetGUID][spellID] = timestamp + 3600
+		sA.learnNew = 1
         if simpleAuras.updating == 1 then
           sA:Msg("Updating duration for " .. (spellName or spellID) .. " ("..spellID..") - wait for it to fade.")
         end
