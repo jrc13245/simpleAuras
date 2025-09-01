@@ -60,6 +60,7 @@ Buff/Debuff:
 - Dual: Mirrors the aura (if xpos = -150, then it will show a mirrored icon/texture at xpos 150).
 
 Cooldown:
+- Always: Shows Cooldown Icon if it's on CD or not.
 - No CD: Show when not on CD.
 - CD: Show when on CD.
 
@@ -73,7 +74,7 @@ Other:
 
 
 ## SuperWoW Features
-If SuperWoW is installed, simpleAuras will automatically learn unkown durations of most auras with the first cast (needs to run out to be accurate).
+If SuperWoW is installed, simpleAuras will automatically learn unkown durations of most of **your** auras with the first cast (needs to run out to be accurate).
 
 Some Spells aren't properly tracked because they use different names during apply and fade or don't trigger the event used to track them (Enlighten -> Enlightened and Weakened Soul for example).
 
