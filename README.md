@@ -74,7 +74,7 @@ Other:
 
 
 ## SuperWoW Features
-If SuperWoW is installed, simpleAuras will automatically learn unkown durations of most of **your** auras with the first cast (needs to run out to be accurate).
+If SuperWoW is installed, simpleAuras will automatically learn unkown durations of most of **your own** auras with the first cast (needs to run out to be accurate).
 
 Some Spells aren't properly tracked because they use different names during apply and fade or don't trigger the event used to track them (Enlighten -> Enlightened and Weakened Soul for example).
 
