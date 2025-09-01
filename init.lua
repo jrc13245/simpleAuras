@@ -4,10 +4,6 @@ simpleAuras = simpleAuras or {}
 -- runtime only
 sA = sA or { auraTimers = {}, frames = {}, dualframes = {}, draggers = {} }
 sA.SuperWoW = SetAutoloot and true or false
--- Эти переменные больше не нужны, так как статус определяется в UpdateAuras
--- sAinCombat = nil
--- sAInRaid = nil
--- sAInParty = nil
 
 -- perf: cache globals we use a lot (Lua 5.0-safe)
 local gsub   = string.gsub
@@ -107,7 +103,7 @@ if sA.SuperWoW then
       casterGUID = gsub(casterGUID or "", "^0x", "")
       if targetGUID then targetGUID = gsub(targetGUID, "^0x", "") end
 
-      if dur and dur > 0 and simpleAuras.updating == 0 then
+      if dur and dur > 0 and simpleAuras.updating == 0 and casterGUID == playerGUID then
         sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
         sA.auraTimers[targetGUID][spellID] = timestamp + dur
       elseif casterGUID == playerGUID then
