@@ -17,33 +17,86 @@ local function deepCopy(tbl)
 end
 
 -- Create Test frames (used by editor preview)
-local TestAura = CreateFrame("Frame", "sATest", UIParent)
-TestAura:SetFrameStrata("BACKGROUND")
-TestAura:SetFrameLevel(128)
-TestAura.texture = TestAura:CreateTexture(nil, "BACKGROUND")
-TestAura.texture:SetAllPoints(TestAura)
-TestAura.durationtext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-TestAura.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-TestAura.durationtext:SetPoint("CENTER", TestAura, "CENTER", 0, 0)
-TestAura.stackstext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontWhite")
-TestAura.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
-TestAura.stackstext:SetPoint("TOPLEFT", TestAura.durationtext, "CENTER", 1, -6)
-TestAura:Hide()
-sA.TestAura = TestAura
+function sA:CreateTestAuras()
 
-local TestAuraDual = CreateFrame("Frame", "sATestDual", UIParent)
-TestAuraDual:SetFrameStrata("BACKGROUND")
-TestAuraDual:SetFrameLevel(128)
-TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "BACKGROUND")
-TestAuraDual.texture:SetAllPoints(TestAuraDual)
-TestAuraDual.durationtext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-TestAuraDual.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-TestAuraDual.durationtext:SetPoint("CENTER", TestAuraDual, "CENTER", 0, 0)
-TestAuraDual.stackstext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontWhite")
-TestAuraDual.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
-TestAuraDual.stackstext:SetPoint("TOPLEFT", TestAuraDual.durationtext, "CENTER", 1, -6)
-TestAuraDual:Hide()
-sA.TestAuraDual = TestAuraDual
+	if sA.TestAura then sA.TestAura:Hide() sA.TestAura = nil end
+	if sA.TestAuraDual then sA.TestAuraDual:Hide() sA.TestAuraDual = nil end
+	if sA.draggers[0] then sA.draggers[0]:Hide() sA.draggers[0] = nil end
+
+	local TestAura = CreateFrame("Frame", "sATest", UIParent)
+	TestAura:SetFrameStrata("BACKGROUND")
+	TestAura:SetFrameLevel(128)
+	TestAura.texture = TestAura:CreateTexture(nil, "ARTWORK")
+	TestAura.texture:SetAllPoints(TestAura)
+	TestAura.durationtext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	TestAura.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+	TestAura.durationtext:SetPoint("CENTER", TestAura, "CENTER", 0, 0)
+	TestAura.stackstext = TestAura:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+	TestAura.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+	TestAura.stackstext:SetPoint("TOPLEFT", TestAura.durationtext, "CENTER", 1, -6)
+	TestAura:Hide()
+
+	local dragger = CreateFrame("Frame", "sADragger" .. 0, TestAura)
+	dragger:SetAllPoints(TestAura)
+	dragger:SetFrameStrata("HIGH")
+	dragger:EnableMouse(true)
+	dragger:RegisterForDrag("LeftButton")
+	dragger:SetBackdrop({edgeFile = "Interface\\Buttons\\WHITE8x8",edgeSize = 1,})
+	dragger:SetBackdropBorderColor(0, 1, 0, 0.5) -- Green, semi-transparent
+
+	dragger:SetScript("OnDragStart", function(self)
+		TestAura:SetMovable(true)
+		TestAura:StartMoving()
+	end)
+
+	dragger:SetScript("OnDragStop", function(self)
+		TestAura:SetMovable(false)
+		TestAura:StopMovingOrSizing()
+		
+		local frameX, frameY = TestAura:GetCenter()
+		local screenWidth, screenHeight = GetScreenWidth(), GetScreenHeight()
+		
+		local offsetX = frameX - (screenWidth / 2)
+		local offsetY = frameY - (screenHeight / 2)
+	
+		offsetX = math.floor(offsetX + 0.5)
+		offsetY = math.floor(offsetY + 0.5)
+		
+		simpleAuras.auras[gui.auraEdit].xpos = offsetX
+		simpleAuras.auras[gui.auraEdit].ypos = offsetY
+		
+		gui.editor.x:SetText(offsetX)
+		gui.editor.y:SetText(offsetY)
+		
+		sA.frames[gui.auraEdit] = nil
+		sA.draggers[gui.auraEdit] = nil
+		if sA.TestAuraDual and sA.TestAuraDual:IsVisible() then
+			sA.TestAuraDual:SetPoint("CENTER", UIParent, "CENTER", -(offsetX), offsetY)
+		end
+
+	end)
+
+	sA.TestAura = TestAura
+	dragger:Hide()
+	sA.draggers[0] = dragger
+	
+	local TestAuraDual = CreateFrame("Frame", "sATestDual", UIParent)
+	TestAuraDual:SetFrameStrata("BACKGROUND")
+	TestAuraDual:SetFrameLevel(128)
+	TestAuraDual.texture = TestAuraDual:CreateTexture(nil, "ARTWORK")
+	TestAuraDual.texture:SetAllPoints(TestAuraDual)
+	TestAuraDual.durationtext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	TestAuraDual.durationtext:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+	TestAuraDual.durationtext:SetPoint("CENTER", TestAuraDual, "CENTER", 0, 0)
+	TestAuraDual.stackstext = TestAuraDual:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+	TestAuraDual.stackstext:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+	TestAuraDual.stackstext:SetPoint("TOPLEFT", TestAuraDual.durationtext, "CENTER", 1, -6)
+	TestAuraDual:Hide()
+	sA.TestAuraDual = TestAuraDual
+	
+end
+
+sA:CreateTestAuras()
 
 table.insert(UISpecialFrames, "sATest")
 table.insert(UISpecialFrames, "sATestDual")
@@ -54,7 +107,7 @@ if not gui then
   gui:SetFrameStrata("HIGH")
   gui:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
   gui:SetWidth(300)
-  gui:SetHeight(400)
+  gui:SetHeight(450)
   gui:SetMovable(true)
   gui:EnableMouse(true)
   gui:RegisterForDrag("LeftButton")
@@ -83,6 +136,32 @@ addBtn:SetFontString(addBtn.text)
 addBtn:SetScript("OnClick", function() sA:AddAura() end)
 addBtn:SetScript("OnEnter", function() addBtn:SetBackdropColor(0.1, 0.4, 0.1, 1) end)
 addBtn:SetScript("OnLeave", function() addBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+
+-- Export All button
+local exportAllBtn = CreateFrame("Button", nil, gui)
+exportAllBtn:SetPoint("TOPLEFT", addBtn, "TOPRIGHT", 5, 0)
+exportAllBtn:SetWidth(20)
+exportAllBtn:SetHeight(20)
+sA:SkinFrame(exportAllBtn, {0.2, 0.2, 0.2, 1})
+exportAllBtn.text = exportAllBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+exportAllBtn.text:SetPoint("CENTER", exportAllBtn, "CENTER", 0, 0)
+exportAllBtn.text:SetText("E")
+exportAllBtn:SetScript("OnClick", function() sA:ExportAllAuras() end)
+exportAllBtn:SetScript("OnEnter", function() exportAllBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+exportAllBtn:SetScript("OnLeave", function() exportAllBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+
+-- Import button
+local importBtn = CreateFrame("Button", nil, gui)
+importBtn:SetPoint("TOPLEFT", exportAllBtn, "TOPRIGHT", 5, 0)
+importBtn:SetWidth(20)
+importBtn:SetHeight(20)
+sA:SkinFrame(importBtn, {0.2, 0.2, 0.2, 1})
+importBtn.text = importBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+importBtn.text:SetPoint("CENTER", importBtn, "CENTER", 0, 0)
+importBtn.text:SetText("I")
+importBtn:SetScript("OnClick", function() sA:ShowImportFrame() end)
+importBtn:SetScript("OnEnter", function() importBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+importBtn:SetScript("OnLeave", function() importBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
 
 -- Close button
 local closeBtn = CreateFrame("Button", nil, gui)
@@ -115,12 +194,26 @@ function sA:RefreshAuraList()
     row:SetPoint("TOPLEFT", 20, -30 - (id - 1) * 22)
     sA:SkinFrame(row, {0.2, 0.2, 0.2, 1})
     row:SetScript("OnEnter", function() row:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
-    row:SetScript("OnLeave", function() row:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    
+    if gui.auraEdit == id then
+      row:SetScript("OnLeave", function() row:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+	elseif aura.enabled == 0 then
+      row:SetScript("OnLeave", function() row:SetBackdropColor(0.4, 0.1, 0.1, 1) end)
+    else
+      row:SetScript("OnLeave", function() row:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    end
 
     row.text = row:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     row.text:SetPoint("LEFT", 5, 0)
     row.text:SetText("[" .. id .. "] " .. (aura.name ~= "" and aura.name or "<unnamed>"))
-    row.text:SetTextColor(unpack(aura.auracolor or {1, 1, 1}))
+    row.text:SetTextColor(unpack(aura.auracolor or {1, 1, 1})) -- Aura color or white for enabled
+   
+    if gui.auraEdit == id then
+      row:SetBackdropColor(0.5, 0.5, 0.5, 1)
+	elseif aura.enabled == 0 then
+      row:SetBackdropColor(0.4, 0.1, 0.1, 1) -- Reddish for disabled
+    end
+    
     row:SetScript("OnClick", function()
       if gui.editor then
         if sA.TestAura then sA.TestAura:Hide() end
@@ -128,6 +221,7 @@ function sA:RefreshAuraList()
         gui.editor:Hide()
         gui.editor = nil
       end
+	  sA:CreateTestAuras()
       sA:EditAura(id)
     end)
 
@@ -185,6 +279,7 @@ function sA:RefreshAuraList()
 
     gui.list[id] = row
   end
+  
 end
 
 -- Save aura data from editor
@@ -193,6 +288,7 @@ function sA:SaveAura(id)
   if not ed then return end
   local data = simpleAuras.auras[id]
   data.name            = ed.name:GetText()
+  data.enabled         = ed.enabled.value
   data.auracolor       = ed.auracolor
   data.autodetect      = ed.autoDetect.value
   data.texture         = ed.texturePath:GetText()
@@ -204,10 +300,13 @@ function sA:SaveAura(id)
   data.lowduration     = ed.lowduration.value
   data.lowdurationvalue= tonumber(ed.lowdurationvalue:GetText())
   data.lowdurationcolor= ed.lowdurationcolor
-  data.unit            = ed.unitButton.text:GetText()
   data.type            = ed.typeButton.text:GetText()
+  data.unit            = ed.unitButton.text:GetText()
+  data.showCD          = ed.showCD.text:GetText()
   data.inCombat        = ed.inCombat.value
   data.outCombat       = ed.outCombat.value
+  data.inRaid          = ed.inRaid.value
+  data.inParty         = ed.inParty.value
   data.invert          = ed.invert.value
   data.dual            = ed.dual.value
 
@@ -222,8 +321,9 @@ function sA:SaveAura(id)
   if sA.TestAuraDual then sA.TestAuraDual:Hide() end
   ed:Hide()
   gui.editor = nil
-  sA:RefreshAuraList()
+  gui.auraEdit = nil
   sA:EditAura(id)
+  
 end
 
 -- Add new aura (optionally copy from existing)
@@ -233,7 +333,7 @@ function sA:AddAura(copyId)
   if copyId and simpleAuras.auras[copyId] then
     simpleAuras.auras[newId] = deepCopy(simpleAuras.auras[copyId])
   else
-    simpleAuras.auras[newId] = { name = "", texture = "Interface\\Icons\\INV_Misc_QuestionMark", inCombat = 1, outCombat = 1 }
+    simpleAuras.auras[newId] = {["dual"]=0,["scale"]=1,["inParty"]=0,["unit"]="Player",["stacks"]=0,["showCD"]="Always",["invert"]=0,["texture"]="Interface\\Icons\\INV_Misc_QuestionMark",["enabled"]=1,["type"]="Buff",["inRaid"]=0,["ypos"]=0,["inCombat"]=1,["outCombat"]=1,["autodetect"]=0,["auracolor"]={[1]=1,[2]=1,[3]=1,[4]=1},["name"]="",["lowduration"]=0,["lowdurationcolor"]={[1]=1,[2]=0,[3]=0,[4]=1},["xpos"]=0,["duration"]=0,["lowdurationvalue"]=5}
   end
   if gui.editor and gui.editor:IsShown() then
     gui.editor:Hide()
@@ -242,7 +342,6 @@ function sA:AddAura(copyId)
     if sA.TestAuraDual then sA.TestAuraDual:Hide() end
   end
   sA:UpdateAuras()
-  sA:RefreshAuraList()
   sA:EditAura(newId)
 end
 
@@ -250,12 +349,14 @@ end
 function sA:EditAura(id)
   local aura = simpleAuras.auras[id]
   if not aura then return end
+  gui.auraEdit = id
+  sA.TestAura:SetMovable(false)
 
   local ed = gui.editor
   if not ed then
     ed = CreateFrame("Frame", "sAEdit", gui)
     ed:SetWidth(300)
-    ed:SetHeight(400)
+    ed:SetHeight(450)
     ed:SetPoint("LEFT", gui, "RIGHT", 10, 0)
     sA:SkinFrame(ed)
     ed:SetMovable(true)
@@ -268,9 +369,33 @@ function sA:EditAura(id)
     ed.title = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.title:SetPoint("TOP", ed, "TOP", 0, -5)
 
+    -- Enabled Checkbox
+    ed.enabled = CreateFrame("Button", nil, ed)
+    ed.enabled:SetWidth(16)
+    ed.enabled:SetHeight(16)
+    ed.enabled:SetPoint("TOPLEFT", ed, "TOPLEFT", 12.5, -35)
+    sA:SkinFrame(ed.enabled, {0.15,0.15,0.15,1})
+    ed.enabled:SetScript("OnEnter", function() ed.enabled:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.enabled:SetScript("OnLeave", function() ed.enabled:SetBackdropColor(0.15,0.15,0.15,1) end)
+    ed.enabled.checked = ed.enabled:CreateTexture(nil, "OVERLAY")
+    ed.enabled.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+    ed.enabled.checked:SetVertexColor(1, 0.8, 0.06, 1)
+    ed.enabled.checked:SetPoint("CENTER", ed.enabled, "CENTER", 0, 0)
+    ed.enabled.checked:SetWidth(7)
+    ed.enabled.checked:SetHeight(7)
+    ed.enabled.value = 1
+    ed.enabled:SetScript("OnClick", function(self)
+      ed.enabled.value = 1 - (ed.enabled.value or 0)
+      if ed.enabled.value == 1 then ed.enabled.checked:Show() else ed.enabled.checked:Hide() end
+	  sA:SaveAura(id)
+    end)
+    ed.enabledLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.enabledLabel:SetPoint("LEFT", ed.enabled, "RIGHT", 5, 0)
+    ed.enabledLabel:SetText("Enabled")
+ 
     -- Name
     ed.nameLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    ed.nameLabel:SetPoint("TOPLEFT", ed, "TOPLEFT", 12.5, -40)
+    ed.nameLabel:SetPoint("TOPLEFT", ed.enabled, "BOTTOMLEFT", 0, -15)
     ed.nameLabel:SetText("Aura Name:")
     ed.name = CreateFrame("EditBox", nil, ed)
     ed.name:SetPoint("LEFT", ed.nameLabel, "RIGHT", 5, 0)
@@ -281,6 +406,7 @@ function sA:EditAura(id)
     ed.name:SetFontObject(GameFontHighlightSmall)
     ed.name:SetTextColor(1, 1, 1)
     ed.name:SetMaxLetters(100)
+    ed.name:SetTextInsets(4, 4, 4, 4)
     ed.name:SetJustifyH("LEFT")
     ed.name:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     ed.name:SetBackdropColor(0.1, 0.1, 0.1, 1)
@@ -288,7 +414,7 @@ function sA:EditAura(id)
     ed.name:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     -- Separator
-    local lineone = ed:CreateTexture(nil, "ARTWORK")
+    local lineone = ed:CreateTexture(nil, "OVERLAY")
     lineone:SetTexture("Interface\\Buttons\\WHITE8x8")
     lineone:SetVertexColor(1, 0.8, 0.06, 1)
     lineone:SetPoint("TOPLEFT", ed.nameLabel, "BOTTOMLEFT", 0, -15)
@@ -340,6 +466,7 @@ function sA:EditAura(id)
     ed.texturePath:SetHeight(20)
     ed.texturePath:SetMultiLine(false)
     ed.texturePath:SetAutoFocus(false)
+    ed.texturePath:SetTextInsets(4, 4, 4, 4)
     ed.texturePath:SetFontObject(GameFontHighlightSmall)
     ed.texturePath:SetTextColor(1,1,1)
     ed.texturePath:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
@@ -377,7 +504,7 @@ function sA:EditAura(id)
     ed.scale:SetScript("OnEnterPressed", function() sA:SaveAura(id) end)
 
     ed.xLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    ed.xLabel:SetPoint("LEFT", ed.scale, "RIGHT", 35, 0)
+    ed.xLabel:SetPoint("LEFT", ed.scale, "RIGHT", 28, 0)
     ed.xLabel:SetText("x pos:")
     ed.x = CreateFrame("EditBox", nil, ed)
     ed.x:SetPoint("LEFT", ed.xLabel, "RIGHT", 5, 0)
@@ -458,7 +585,7 @@ function sA:EditAura(id)
     ed.stacksLabel:SetText("Show Stacks")
 
     -- Conditions (unit / type)
-    local linetwo = ed:CreateTexture(nil, "ARTWORK")
+    local linetwo = ed:CreateTexture(nil, "OVERLAY")
     linetwo:SetTexture("Interface\\Buttons\\WHITE8x8")
     linetwo:SetVertexColor(1, 0.8, 0.06, 1)
     linetwo:SetPoint("TOPLEFT", ed.duration, "BOTTOMLEFT", 0, -15)
@@ -568,6 +695,54 @@ function sA:EditAura(id)
 	  local menu = ed.unitButton.menu
 	  if menu:IsVisible() then menu:Hide() else menu:Show() end
 	end)
+	
+	-- Cooldown option
+	ed.showCD = CreateFrame("Button", nil, ed)
+	ed.showCD:SetWidth(80)
+	ed.showCD:SetHeight(20)
+	ed.showCD:SetPoint("LEFT", ed.typeButton, "RIGHT", 77, 0)
+	sA:SkinFrame(ed.showCD, {0.2,0.2,0.2,1})
+	ed.showCD.text = ed.showCD:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	ed.showCD.text:SetPoint("CENTER", ed.showCD, "CENTER", 0, 0)
+	ed.showCD:SetScript("OnEnter", function() ed.showCD:SetBackdropColor(0.5,0.5,0.5,1) end)
+	ed.showCD:SetScript("OnLeave", function() ed.showCD:SetBackdropColor(0.2,0.2,0.2,1) end)
+	ed.showCD:SetScript("OnClick", function(self)
+	  if not ed.showCD.menu then
+		local menu = CreateFrame("Frame", nil, ed)
+		menu:SetPoint("TOPLEFT", ed.showCD, "BOTTOMLEFT", 0, -2)
+		menu:SetFrameStrata("DIALOG")
+		menu:SetFrameLevel(10)
+		menu:SetWidth(80)
+		menu:SetHeight(40)
+		sA:SkinFrame(menu, {0.15,0.15,0.15,1})
+		menu:Hide()
+		ed.showCD.menu = menu
+		local function makeChoice(text, index)
+		  local b = CreateFrame("Button", nil, menu)
+		  b:SetWidth(80)
+		  b:SetHeight(20)
+		  b:SetPoint("TOPLEFT", menu, "TOPLEFT", 0, -((index - 1) * 20))
+		  sA:SkinFrame(b, {0.2,0.2,0.2,1})
+		  b.text = b:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+		  b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+		  b.text:SetText(text)
+		  b:SetScript("OnEnter", function() b:SetBackdropColor(0.5,0.5,0.5,1) end)
+		  b:SetScript("OnLeave", function() b:SetBackdropColor(0.2,0.2,0.2,1) end)
+		  b:SetScript("OnClick", function()
+			ed.showCD.text:SetText(text)
+			aura.showCD = text
+			menu:Hide()
+			sA:SaveAura(id)
+		  end)
+		end
+		makeChoice("Always", 1)
+		makeChoice("CD", 2)
+		makeChoice("No CD", 3)
+	  end
+	  local menu = ed.showCD.menu
+	  if menu:IsVisible() then menu:Hide() else menu:Show() end
+	end)
+	ed.showCD:Hide()
 
     -- Low duration options
     ed.lowduration = CreateFrame("Button", nil, ed)
@@ -673,6 +848,54 @@ function sA:EditAura(id)
     ed.outcombatLabel:SetPoint("LEFT", ed.outCombat, "RIGHT", 5, 1)
     ed.outcombatLabel:SetText("Out of Combat")
 
+    -- In Party checkbox
+    ed.inParty = CreateFrame("Button", nil, ed)
+    ed.inParty:SetWidth(16)
+    ed.inParty:SetHeight(16)
+    ed.inParty:SetPoint("TOPLEFT", ed.inCombat, "BOTTOMLEFT", 0, -15)
+    sA:SkinFrame(ed.inParty, {0.15,0.15,0.15,1})
+    ed.inParty:SetScript("OnEnter", function() ed.inParty:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.inParty:SetScript("OnLeave", function() ed.inParty:SetBackdropColor(0.15,0.15,0.15,1) end)
+    ed.inParty.checked = ed.inParty:CreateTexture(nil, "OVERLAY")
+    ed.inParty.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+    ed.inParty.checked:SetVertexColor(1, 0.8, 0.06, 1)
+    ed.inParty.checked:SetPoint("CENTER", ed.inParty, "CENTER", 0, 0)
+    ed.inParty.checked:SetWidth(7)
+    ed.inParty.checked:SetHeight(7)
+    ed.inParty.value = 0
+    ed.inParty:SetScript("OnClick", function(self)
+      ed.inParty.value = 1 - (ed.inParty.value or 0)
+      if ed.inParty.value == 1 then ed.inParty.checked:Show() else ed.inParty.checked:Hide() end
+	  sA:SaveAura(id)
+    end)
+    ed.inpartyLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.inpartyLabel:SetPoint("LEFT", ed.inParty, "RIGHT", 5, 1)
+    ed.inpartyLabel:SetText("In Party")
+
+    -- In Raid checkbox
+    ed.inRaid = CreateFrame("Button", nil, ed)
+    ed.inRaid:SetWidth(16)
+    ed.inRaid:SetHeight(16)
+    ed.inRaid:SetPoint("TOPLEFT", ed.outCombat, "BOTTOMLEFT", 0, -15)
+    sA:SkinFrame(ed.inRaid, {0.15,0.15,0.15,1})
+    ed.inRaid:SetScript("OnEnter", function() ed.inRaid:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.inRaid:SetScript("OnLeave", function() ed.inRaid:SetBackdropColor(0.15,0.15,0.15,1) end)
+    ed.inRaid.checked = ed.inRaid:CreateTexture(nil, "OVERLAY")
+    ed.inRaid.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+    ed.inRaid.checked:SetVertexColor(1, 0.8, 0.06, 1)
+    ed.inRaid.checked:SetPoint("CENTER", ed.inRaid, "CENTER", 0, 0)
+    ed.inRaid.checked:SetWidth(7)
+    ed.inRaid.checked:SetHeight(7)
+    ed.inRaid.value = 0
+    ed.inRaid:SetScript("OnClick", function(self)
+      ed.inRaid.value = 1 - (ed.inRaid.value or 0)
+      if ed.inRaid.value == 1 then ed.inRaid.checked:Show() else ed.inRaid.checked:Hide() end
+	  sA:SaveAura(id)
+    end)
+    ed.inraidLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.inraidLabel:SetPoint("LEFT", ed.inRaid, "RIGHT", 5, 1)
+    ed.inraidLabel:SetText("In Raid")
+
     -- Invert / Dual
     ed.invert = CreateFrame("Button", nil, ed)
     ed.invert:SetWidth(16)
@@ -723,8 +946,11 @@ function sA:EditAura(id)
 	if aura.type == "Cooldown" then
 		ed.unitLabel:Hide()
 		ed.unitButton:Hide()
-		ed.invertLabel:SetText("No CD")
-		ed.dualLabel:SetText("CD")
+		ed.invert:Hide()
+		ed.invertLabel:Hide()
+		ed.dual:Hide()
+		ed.dualLabel:Hide()
+		ed.showCD:Show()
 	end
 
     -- Delete / Close / Copy buttons
@@ -761,11 +987,25 @@ function sA:EditAura(id)
     ed.copy:SetScript("OnEnter", function() ed.copy:SetBackdropColor(0.1,0.4,0.1,1) end)
     ed.copy:SetScript("OnLeave", function() ed.copy:SetBackdropColor(0.2,0.2,0.2,1) end)
 
+    -- Export Single button
+    ed.export = CreateFrame("Button", nil, ed)
+    ed.export:SetPoint("TOPLEFT", ed.copy, "TOPRIGHT", 5, 0)
+    ed.export:SetWidth(20)
+    ed.export:SetHeight(20)
+    sA:SkinFrame(ed.export, {0.2,0.2,0.2,1})
+    ed.export.text = ed.export:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    ed.export.text:SetPoint("CENTER", 0.5, 1)
+    ed.export.text:SetText("E")
+    ed.export:SetScript("OnEnter", function() ed.export:SetBackdropColor(0.5,0.5,0.5,1) end)
+    ed.export:SetScript("OnLeave", function() ed.export:SetBackdropColor(0.2,0.2,0.2,1) end)
+
     gui.editor = ed
   end
 
   -- Populate fields with aura values
   ed.title:SetText("[" .. tostring(id) .. "] " .. (aura.name ~= "" and aura.name or "<unnamed>"))
+  ed.enabled.value = aura.enabled or 1
+  if ed.enabled.value == 1 then ed.enabled.checked:Show() else ed.enabled.checked:Hide() end
   ed.name:SetText(aura.name or "")
   ed.auracolor = aura.auracolor or {1,1,1,1}
   ed.auracolorpicker = ed.auracolorpicker -- ensure exists
@@ -795,14 +1035,23 @@ function sA:EditAura(id)
   if ed.unitButton then
 	ed.unitButton.text:SetText(aura.unit or "Player")
   end
+  if ed.showCD then
+	ed.showCD.text:SetText(aura.showCD or "Always")
+  end
   ed.inCombat.value = aura.inCombat or 0
   if ed.inCombat.value == 1 then ed.inCombat.checked:Show() else ed.inCombat.checked:Hide() end
   ed.outCombat.value = aura.outCombat or 0
   if ed.outCombat.value == 1 then ed.outCombat.checked:Show() else ed.outCombat.checked:Hide() end
+  ed.inRaid.value = aura.inRaid or 0
+  if ed.inRaid.value == 1 then ed.inRaid.checked:Show() else ed.inRaid.checked:Hide() end
+  ed.inParty.value = aura.inParty or 0
+  if ed.inParty.value == 1 then ed.inParty.checked:Show() else ed.inParty.checked:Hide() end
   ed.invert.value = aura.invert or 0
   if ed.invert.value == 1 then ed.invert.checked:Show() else ed.invert.checked:Hide() end
   ed.dual.value = aura.dual or 0
   if ed.dual.value == 1 then ed.dual.checked:Show() else ed.dual.checked:Hide() end
+
+  ed.export:SetScript("OnClick", function() sA:ExportSingleAura(id) end)
 
   -- Show Test aura(s)
   sA.TestAura:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
@@ -839,7 +1088,7 @@ function sA:EditAura(id)
   end
 
   -- Editor button handlers
-  ed.close:SetScript("OnClick", function() ed:Hide(); gui.editor = nil; sA.TestAura:Hide(); sA.TestAuraDual:Hide() end)
+  ed.close:SetScript("OnClick", function() ed:Hide(); gui.editor = nil; sA.TestAura:Hide(); sA.TestAuraDual:Hide(); gui.auraEdit = nil; sA:RefreshAuraList(); end)
   ed.copy:SetScript("OnClick", function() sA:AddAura(id) end)
 
   ed.delete:SetScript("OnClick", function()
@@ -869,6 +1118,11 @@ function sA:EditAura(id)
     yes:SetScript("OnLeave", function() yes:SetBackdropColor(0.2,0.2,0.2,1) end)
     yes:SetScript("OnClick", function()
       table.remove(simpleAuras.auras, id)
+	  if sA.frames[id] then sA.frames[id]:Hide() end
+	  if sA.dualframes[id] then sA.dualframes[id]:Hide() end
+      sA.frames = {}
+      sA.dualframes = {}
+      sA.draggers = {}
       ed.confirm:Hide()
       ed:Hide()
       gui.editor = nil
@@ -1017,7 +1271,7 @@ function sA:EditAura(id)
       btn:SetWidth(size)
       btn:SetHeight(size)
       btn:SetPoint("TOPLEFT", col * (size + padding) + 22, -row * (size + padding))
-      local tex = btn:CreateTexture(nil, "BACKGROUND")
+      local tex = btn:CreateTexture(nil, "ARTWORK")
       tex:SetAllPoints(btn)
       tex:SetTexture("Interface\\AddOns\\simpleAuras\\Auras\\Aura" .. i)
       btn.texturePath = "Interface\\AddOns\\simpleAuras\\Auras\\Aura" .. i
@@ -1084,15 +1338,272 @@ function sA:EditAura(id)
     end)
     local contentHeight = content:GetHeight()
     local visibleHeight = scroll:GetHeight()
-    local maxScroll = math.max(0, contentHeight - visibleHeight - 313)
+    local maxScroll = math.max(0, contentHeight - visibleHeight - 350)
     scrollbar:SetMinMaxValues(0, maxScroll)
     scrollbar:SetValue(0)
 	
   end)
+  
+  sA:RefreshAuraList()
 
   -- ensure editor visible
   ed:Show()
 end
 
+-------------------------------------------------
+-- Import/Export Functions (Custom Implementation)
+-------------------------------------------------
+
+local function serializeValue(val)
+    local vtype = type(val)
+    if vtype == "string" then
+        return string.format("%q", val)
+    elseif vtype == "number" or vtype == "boolean" then
+        return tostring(val)
+    elseif vtype == "table" then
+        local parts = {}
+        for k, v in pairs(val) do
+            -- Keys must also be serialized correctly
+            local keyStr = serializeValue(k)
+            local valStr = serializeValue(v)
+            if valStr ~= "nil" then -- Don't save nil values
+                table.insert(parts, string.format("[%s]=%s", keyStr, valStr))
+            end
+        end
+        return "{" .. table.concat(parts, ",") .. "}"
+    else
+        return "nil"
+    end
+end
+
+local function Serialize(data)
+    if type(data) ~= "table" then return nil end
+    return serializeValue(data)
+end
+
+local function Deserialize(str)
+    if not str or type(str) ~= "string" or str == "" then
+        return false, "Invalid input string"
+    end
+
+    local func, err = loadstring(str)
+    if not func then
+        return false, "Syntax error: " .. (err or "unknown")
+    end
+
+    -- Use pcall to safely execute the loaded string
+    local success, result = pcall(func)
+    if not success then
+        return false, "Execution error: " .. (result or "unknown")
+    end
+
+    return true, result
+end
+
+function sA:ShowExportFrame(exportString)
+    if not exportString then
+        sA:Msg("Nothing to export.")
+        return
+    end
+    
+	if sAImportFrame and sAImportFrame:IsVisible() then
+		sAImportFrame:Hide()
+	end
+	
+    local frame = _G["sAExportFrame"]
+    if not frame then
+        frame = CreateFrame("Frame", "sAExportFrame", UIParent)
+        frame:SetFrameStrata("DIALOG")
+        frame:SetPoint("CENTER", 0, 0)
+        frame:SetWidth(400)
+        frame:SetHeight(200)
+        sA:SkinFrame(frame)
+        frame:SetMovable(true)
+        frame:EnableMouse(true)
+        frame:RegisterForDrag("LeftButton")
+        frame:SetScript("OnDragStart", function() frame:StartMoving() end)
+        frame:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
+
+        local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        title:SetPoint("TOP", 0, -10)
+        title:SetText("Exported Aura String")
+		
+		
+		local scroll = CreateFrame("ScrollFrame", "sAExportScrollFrame", frame)
+        scroll:SetPoint("TOPLEFT", 15, -30)
+        scroll:SetPoint("BOTTOMRIGHT", -15, 40)
+
+        local editBox = CreateFrame("EditBox", "sAExportEditBox", scroll)
+        editBox:SetMultiLine(true)
+        editBox:SetAutoFocus(false)
+        editBox:SetFontObject(GameFontHighlightSmall)
+        editBox:SetWidth(370)
+        editBox:SetHeight(120)
+		editBox:SetTextInsets(4, 4, 4, 4)
+        editBox:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+		editBox:SetBackdropColor(0.1, 0.1, 0.1, 1)
+		editBox:SetBackdropBorderColor(0, 0, 0, 1)
+		editBox:SetScript("OnEscapePressed", function() editBox:ClearFocus() end)
+        scroll:SetScrollChild(editBox)
+        
+        local closeBtn = CreateFrame("Button", "sAExportCloseButton", frame)
+        closeBtn:SetPoint("BOTTOM", 0, 10)
+        closeBtn:SetWidth(80)
+        closeBtn:SetHeight(22)
+        sA:SkinFrame(closeBtn, {0.2, 0.2, 0.2, 1})
+        closeBtn.text = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        closeBtn.text:SetPoint("CENTER", 0, 1)
+        closeBtn.text:SetText("Close")
+        closeBtn:SetScript("OnClick", function() frame:Hide() end)
+        closeBtn:SetScript("OnEnter", function() closeBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+        closeBtn:SetScript("OnLeave", function() closeBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    end
+
+    local editBox = _G["sAExportEditBox"]
+    editBox:SetText(exportString)
+    editBox:SetFocus()
+    editBox:HighlightText()
+    frame:Show()
+end
+
+function sA:ExportAllAuras()
+    local exportTable = {}
+    for _, aura in ipairs(simpleAuras.auras) do
+        table.insert(exportTable, deepCopy(aura))
+    end
+    
+    local serialized = Serialize(exportTable)
+    if serialized then
+        sA:ShowExportFrame(serialized)
+    else
+        sA:Msg("Error during serialization.")
+    end
+end
+
+function sA:ExportSingleAura(id)
+    local auraToExport = deepCopy(simpleAuras.auras[id])
+    local serialized = Serialize(auraToExport)
+
+    if serialized then
+        sA:ShowExportFrame(serialized)
+    else
+        sA:Msg("Error during serialization.")
+    end
+end
+
+function sA:ShowImportFrame()
+
+	if sAExportFrame and sAExportFrame:IsVisible() then
+		sAExportFrame:Hide()
+	end
+
+    local frame = _G["sAImportFrame"]
+    if not frame then
+        frame = CreateFrame("Frame", "sAImportFrame", UIParent)
+        frame:SetFrameStrata("DIALOG")
+        frame:SetPoint("CENTER", 0, 0)
+        frame:SetWidth(400)
+        frame:SetHeight(200)
+        sA:SkinFrame(frame)
+        frame:SetMovable(true)
+        frame:EnableMouse(true)
+        frame:RegisterForDrag("LeftButton")
+        frame:SetScript("OnDragStart", function() frame:StartMoving() end)
+        frame:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
+
+        local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        title:SetPoint("TOP", 0, -10)
+        title:SetText("Paste Aura String to Import")
+        
+        local scroll = CreateFrame("ScrollFrame", "sAImportScrollFrame", frame)
+        scroll:SetPoint("TOPLEFT", 15, -30)
+        scroll:SetPoint("BOTTOMRIGHT", -15, 40)
+
+        local editBox = CreateFrame("EditBox", "sAImportEditBox", scroll)
+        editBox:SetMultiLine(true)
+        editBox:SetAutoFocus(false)
+        editBox:SetFontObject(GameFontHighlightSmall)
+        editBox:SetWidth(370)
+        editBox:SetHeight(120)
+		editBox:SetTextInsets(4, 4, 4, 4)
+        editBox:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+		editBox:SetBackdropColor(0.1, 0.1, 0.1, 1)
+		editBox:SetBackdropBorderColor(0, 0, 0, 1)
+		editBox:SetScript("OnEscapePressed", function() editBox:ClearFocus() end)
+        scroll:SetScrollChild(editBox)
+
+        local importBtn = CreateFrame("Button", "sAImportImportButton", frame)
+        importBtn:SetPoint("BOTTOMLEFT", 40, 10)
+        importBtn:SetWidth(80)
+        importBtn:SetHeight(22)
+        sA:SkinFrame(importBtn, {0.2, 0.2, 0.2, 1})
+        importBtn.text = importBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        importBtn.text:SetPoint("CENTER", 0, 1)
+        importBtn.text:SetText("Import")
+        importBtn:SetScript("OnClick", function()
+            sA:ImportAuras(_G["sAImportEditBox"]:GetText())
+            frame:Hide()
+        end)
+        importBtn:SetScript("OnEnter", function() importBtn:SetBackdropColor(0.1, 0.4, 0.1, 1) end)
+        importBtn:SetScript("OnLeave", function() importBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+        
+        local cancelBtn = CreateFrame("Button", "sAImportCancelButton", frame)
+        cancelBtn:SetPoint("BOTTOMRIGHT", -40, 10)
+        cancelBtn:SetWidth(80)
+        cancelBtn:SetHeight(22)
+        sA:SkinFrame(cancelBtn, {0.2, 0.2, 0.2, 1})
+        cancelBtn.text = cancelBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        cancelBtn.text:SetPoint("CENTER", 0, 1)
+        cancelBtn.text:SetText("Cancel")
+        cancelBtn:SetScript("OnClick", function() frame:Hide() end)
+        cancelBtn:SetScript("OnEnter", function() cancelBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
+        cancelBtn:SetScript("OnLeave", function() cancelBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
+    end
+    
+    _G["sAImportEditBox"]:SetText("")
+    frame:Show()
+end
+
+function sA:ImportAuras(importString)
+    if not importString or importString == "" then return end
+
+	importString = "return " .. importString
+
+    local success, data = Deserialize(importString)
+
+    if not success then
+        sA:Msg("Error: Invalid import string.")
+        DEFAULT_CHAT_FRAME:AddMessage("|cFFFF0000sA Import Error: |r" .. tostring(data))
+        return
+    end
+
+    if type(data) ~= "table" then
+        sA:Msg("Error: Import data is not a valid table.")
+        return
+    end
+
+    local importedCount = 0
+    -- Check if it's a single aura (a table of settings) or multiple auras (an array of tables)
+    if data[1] and type(data[1]) == "table" then -- It's likely an array of auras
+        for _, auraData in ipairs(data) do
+            if type(auraData) == "table" then
+                table.insert(simpleAuras.auras, auraData)
+                importedCount = importedCount + 1
+            end
+        end
+    else -- It's likely a single aura
+        table.insert(simpleAuras.auras, data)
+        importedCount = 1
+    end
+
+    if importedCount > 0 then
+        sA:Msg(importedCount .. " aura(s) imported successfully.")
+        sA:RefreshAuraList()
+    else
+        sA:Msg("No valid auras found in the import string.")
+    end
+end
+
 -- Init
 sA:RefreshAuraList()
+

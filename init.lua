@@ -2,9 +2,8 @@
 simpleAuras = simpleAuras or {}
 
 -- runtime only
-sA = sA or { auraTimers = {}, frames = {}, dualframes = {} }
+sA = sA or { auraTimers = {}, frames = {}, dualframes = {}, draggers = {} }
 sA.SuperWoW = SetAutoloot and true or false
-sAinCombat = nil
 
 -- perf: cache globals we use a lot (Lua 5.0-safe)
 local gsub   = string.gsub
@@ -76,6 +75,7 @@ if sA.SuperWoW then
               local castTime = ActiveCasts[targetGUID][spellID]
               local actual   = timestamp - castTime
               simpleAuras.auradurations[spellID] = floor(actual + 0.5)
+			  sA.learnNew = nil
               if simpleAuras.updating == 1 then
                 sA:Msg("Updated duration for " .. spellName .. " ("..spellID..") to: " .. floor(actual + 0.5) .. "s")
               end
@@ -103,7 +103,7 @@ if sA.SuperWoW then
       casterGUID = gsub(casterGUID or "", "^0x", "")
       if targetGUID then targetGUID = gsub(targetGUID, "^0x", "") end
 
-      if dur and dur > 0 and simpleAuras.updating == 0 then
+      if dur and dur > 0 and simpleAuras.updating == 0 and casterGUID == playerGUID then
         sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
         sA.auraTimers[targetGUID][spellID] = timestamp + dur
       elseif casterGUID == playerGUID then
@@ -111,7 +111,8 @@ if sA.SuperWoW then
         ActiveCasts[targetGUID] = ActiveCasts[targetGUID] or {}
         ActiveCasts[targetGUID][spellID] = timestamp
         sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
-        sA.auraTimers[targetGUID][spellID] = 0
+        sA.auraTimers[targetGUID][spellID] = timestamp + 3600
+		sA.learnNew = 1
         if simpleAuras.updating == 1 then
           sA:Msg("Updating duration for " .. (spellName or spellID) .. " ("..spellID..") - wait for it to fade.")
         end
@@ -123,6 +124,57 @@ end
 -- Timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 sAEvent:SetScript("OnUpdate", function()
+  -- Cache the UI scale in a safe context
+  sA.uiScale = UIParent:GetEffectiveScale()
+
+  -- Handle Move Mode with Ctrl Key
+  local mainFrame = _G["sAGUI"]
+  if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() and IsAltKeyDown() and IsShiftKeyDown() then
+  
+	-- TestAura
+	if sA.TestAura and sA.TestAura:IsVisible() then
+	
+		sA.draggers[0]:Show()
+		gui:SetAlpha(0)
+		gui.editor:SetAlpha(0)
+		
+	else
+  
+		-- Continuously show draggers for any visible frames while in move mode
+		for id, frame in pairs(sA.frames) do
+		  if frame:IsVisible() and sA.draggers[id] then
+			sA.draggers[id]:Show()
+			gui:SetAlpha(0)
+			if gui.editor then
+			  gui.editor:SetAlpha(0)
+			end
+		  end
+		end
+		
+	end
+	
+  else
+	
+	-- Hide all draggers when not in move mode
+    for id, dragger in pairs(sA.draggers) do
+      if dragger then
+		dragger:Hide()
+        gui:SetAlpha(1)
+		if gui.editor then
+          gui.editor:SetAlpha(1)
+		end
+	  end
+    end
+	
+	-- Reload data if in editor
+	if gui.editor and gui.auraEdit and sA.draggers[0] and sA.draggers[0]:IsVisible() then
+		
+		sA:SaveAura(gui.auraEdit)
+		
+	end
+	
+  end
+
   local time = GetTime()
   local refreshRate = 1 / (simpleAuras.refresh or 5)
   if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
@@ -163,6 +215,7 @@ SlashCmdList["sA"] = function(msg)
 	
 	-- hide / show or no command
 	if cmd == "" or cmd == "show" or cmd == "hide" then
+		if gui.auraEdit then gui.auraEdit = nil end
 		if cmd == "show" then
 			if not gui:IsVisible() then gui:Show() end
 		elseif cmd == "hide" then
