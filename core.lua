@@ -223,6 +223,13 @@ local function CreateAuraFrame(id)
   return f
 end
 
+local function CreateDualFrame(id)
+  local f = CreateAuraFrame(id)
+  f.texture:SetTexCoord(1, 0, 0, 1)
+  f.stackstext:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -2, 2)
+  return f
+end
+
 local function CreateDraggerFrame(id, auraFrame)
   local dragger = CreateFrame("Frame", "sADragger" .. id, auraFrame)
   dragger:SetAllPoints(auraFrame)
@@ -250,6 +257,13 @@ local function CreateDraggerFrame(id, auraFrame)
     -- Round coordinates to prevent floating point issues in SavedVariables
     simpleAuras.auras[id].xpos = math.floor(offsetX + 0.5)
     simpleAuras.auras[id].ypos = math.floor(offsetY + 0.5)
+	
+	-- if gui.editor then
+	  -- gui.editor:Hide()
+	  -- gui.editor = nil
+	  -- sA:EditAura(id)
+	-- end
+	
   end)
   
   -- Add a border to make it visible
@@ -280,16 +294,16 @@ function sA:UpdateAuras()
     if gui and gui.editor then gui.editor:Hide(); gui.editor = nil end
   end
 
-  -- Получаем актуальный статус игрока один раз за цикл
+  -- Get the current player status once per cycle
   local hasTarget = UnitExists("target")
   local inCombat = UnitAffectingCombat("player")
   local inRaid = UnitInRaid("player")
-  local inParty = UnitInParty("player") and not inRaid
+  local inParty = GetNumPartyMembers() > 0 and not inRaid
 
   for id, aura in ipairs(simpleAuras.auras) do
     -- Add a guard clause to skip invalid/empty auras completely.
     -- This prevents errors when a new, unconfigured aura exists.
-    if aura and aura.name and aura.name ~= "" then
+    if aura and aura.name then
       local show, icon, duration, stacks
       local currentDuration, currentStacks, currentDurationtext
 
@@ -300,16 +314,16 @@ function sA:UpdateAuras()
       self.draggers[id] = dragger
       if aura.dual == 1 and aura.type ~= "Cooldown" then self.dualframes[id] = dualframe end
       
-      local mainFrame = _G["sAGUI"]
-      local editorFrame = _G["sAEdit"]
       local isEnabled = (aura.enabled == nil or aura.enabled == 1)
       local shouldShow
 
-      if mainFrame and mainFrame:IsVisible() then
+      if gui and gui:IsVisible() then
         -- SCENARIO 2 & 3: CONFIG or EDIT MODE
         -- Show all ENABLED auras, unless the editor is open for a DIFFERENT aura.
-        shouldShow = isEnabled and not (editorFrame and editorFrame:IsVisible())
+        shouldShow = isEnabled and not (gui.editor and gui.editor:IsVisible())
+		
       else
+	  
         -- SCENARIO 1: NORMAL GAMEPLAY MODE
         local conditionsMet = self:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
         show = 0 -- Default to not showing
@@ -331,13 +345,7 @@ function sA:UpdateAuras()
             -- Apply inversion logic
             if aura.type == "Cooldown" then
               local onCooldown = duration and duration > 0
-              if aura.dual == 1 then
-                show = onCooldown and 1 or 0
-              elseif aura.invert == 1 then
-                show = not onCooldown and 1 or 0
-              else -- Normal cooldown should show when it's running
-                show = onCooldown and 1 or 0
-              end
+              show = (((aura.showCD == "No CD" or aura.showCD == "Always") and not onCooldown) or ((aura.showCD == "CD" or aura.showCD == "Always") and onCooldown)) and 1 or 0
             elseif aura.invert == 1 then
               show = 1 - auraIsPresent
             else
@@ -347,16 +355,17 @@ function sA:UpdateAuras()
         end
         
         shouldShow = (show == 1)
+		
       end
       
       -- This handles hiding the aura if the editor for it is open
-      if editorFrame and editorFrame:IsVisible() and sA.auraEditingId and sA.auraEditingId ~= id then
+      if gui.editor and gui.editor:IsVisible() then
           shouldShow = false
       end
 
       if shouldShow then
         -- Get fresh aura data only if we are going to show it
-        if not icon then -- Data might not have been fetched in /sa mode
+        if not (icon or aura.name) then -- Data might not have been fetched in /sa mode
           if sA.SuperWoW then
             icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
           else
