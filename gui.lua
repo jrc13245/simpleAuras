@@ -1338,7 +1338,7 @@ function sA:EditAura(id)
     end)
     local contentHeight = content:GetHeight()
     local visibleHeight = scroll:GetHeight()
-    local maxScroll = math.max(0, contentHeight - visibleHeight - 313)
+    local maxScroll = math.max(0, contentHeight - visibleHeight - 350)
     scrollbar:SetMinMaxValues(0, maxScroll)
     scrollbar:SetValue(0)
 	
@@ -1606,3 +1606,4 @@ end
 
 -- Init
 sA:RefreshAuraList()
+
