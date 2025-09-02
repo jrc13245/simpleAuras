@@ -4,7 +4,7 @@ simpleAuras = simpleAuras or {}
 -- runtime only
 sA = sA or { auraTimers = {}, frames = {}, dualframes = {}, draggers = {} }
 sA.SuperWoW = SetAutoloot and true or false
-sA.learnNew = nil
+sA.learnNew = 0
 
 -- perf: cache globals we use a lot (Lua 5.0-safe)
 local gsub   = string.gsub
@@ -76,7 +76,7 @@ if sA.SuperWoW then
               local castTime = ActiveCasts[targetGUID][spellID]
               local actual   = timestamp - castTime
               simpleAuras.auradurations[spellID] = floor(actual + 0.5)
-			  sA.learnNew = nil
+			  sA.learnNew = 0
               if simpleAuras.updating == 1 then
                 sA:Msg("Updated duration for " .. spellName .. " ("..spellID..") to: " .. floor(actual + 0.5) .. "s")
               end
@@ -107,6 +107,7 @@ if sA.SuperWoW then
       if dur and dur > 0 and simpleAuras.updating == 0 and casterGUID == playerGUID then
         sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
         sA.auraTimers[targetGUID][spellID] = timestamp + dur
+		sA.learnNew = 0
       elseif casterGUID == playerGUID then
         if not targetGUID or targetGUID == "" then targetGUID = playerGUID end
         ActiveCasts[targetGUID] = ActiveCasts[targetGUID] or {}
@@ -280,4 +281,5 @@ SlashCmdList["sA"] = function(msg)
 	sA:Msg("/sa learn X Y - manually set duration Y for aura with ID X.")
 
 end
+
 
