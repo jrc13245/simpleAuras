@@ -4,6 +4,9 @@ simpleAuras = simpleAuras or {}
 -- runtime only
 sA = sA or { auraTimers = {}, frames = {}, dualframes = {}, draggers = {} }
 sA.SuperWoW = SetAutoloot and true or false
+sA.learnNew = {}
+local _, playerGUID = UnitExists("player")
+sA.playerGUID = playerGUID
 
 -- perf: cache globals we use a lot (Lua 5.0-safe)
 local gsub   = string.gsub
@@ -34,15 +37,29 @@ simpleAuras.refresh = simpleAuras.refresh or 5
 if sA.SuperWoW then
   simpleAuras.auradurations = simpleAuras.auradurations or {}
   simpleAuras.updating      = simpleAuras.updating or 0
+  simpleAuras.showlearned   = simpleAuras.showlearned or 0
 end
 
 ---------------------------------------------------
 -- Helper Functions
 ---------------------------------------------------
 
-local function GetAuraDurationBySpellID(spellID)
-  if not spellID then return nil end
-  return simpleAuras.auradurations[spellID]
+local function GetAuraDurationBySpellID(spellID, casterGUID)
+  if not spellID or not casterGUID then return nil end
+  if type(simpleAuras.auradurations[spellID]) ~= "table" then
+	simpleAuras.auradurations[spellID] = nil
+	return nil
+  end
+  return simpleAuras.auradurations[spellID][casterGUID]
+end
+
+local function inAuras(spellName)
+    for _, aura in ipairs(simpleAuras.auras) do
+        if aura.name == spellName then
+            return true, aura.myCast
+        end
+    end
+    return false
 end
 
 -- SuperWoW: learn and track aura durations
@@ -71,18 +88,24 @@ if sA.SuperWoW then
           n = gsub(n, "%s*%(%s*Rank%s+%d+%s*%)", "")
           if n == spellName then
             -- if we were learning this duration, compute actual
-            if ActiveCasts[targetGUID] and ActiveCasts[targetGUID][spellID] then
-              local castTime = ActiveCasts[targetGUID][spellID]
+			
+            if ActiveCasts[targetGUID] and ActiveCasts[targetGUID][spellID] and ActiveCasts[targetGUID][spellID].duration then
+              local castTime = ActiveCasts[targetGUID][spellID].duration
               local actual   = timestamp - castTime
-              simpleAuras.auradurations[spellID] = floor(actual + 0.5)
-			  sA.learnNew = nil
+			  local casterGUID = ActiveCasts[targetGUID][spellID].castby
+			  simpleAuras.auradurations[spellID] = simpleAuras.auradurations[spellID] or {}
+              simpleAuras.auradurations[spellID][casterGUID] = floor(actual + 0.5)
+			  sA.learnNew[spellID] = nil
               if simpleAuras.updating == 1 then
-                sA:Msg("Updated duration for " .. spellName .. " ("..spellID..") to: " .. floor(actual + 0.5) .. "s")
-              end
-              ActiveCasts[targetGUID][spellID] = nil
+                sA:Msg("Updated " .. spellName .. " (ID:"..spellID..") to: " .. floor(actual + 0.5) .. "s")
+              elseif simpleAuras.showlearned == 1 then
+				sA:Msg("Learned " .. spellName .. " (ID:"..spellID..") duration: " .. floor(actual + 0.5) .. "s")
+			  end
+              ActiveCasts[targetGUID][spellID].duration = nil
+              ActiveCasts[targetGUID][spellID].castby = nil
             end
-
-            sA.auraTimers[spellID] = nil
+			
+            sA.auraTimers[targetGUID][spellID] = nil
             if not next(sA.auraTimers[targetGUID]) then
               sA.auraTimers[targetGUID] = nil
             end
@@ -94,29 +117,58 @@ if sA.SuperWoW then
     elseif event == "UNIT_CASTEVENT" and simpleAuras.auradurations then
       local casterGUID, targetGUID, evType, spellID = arg1, arg2, arg3, arg4
       if evType ~= "CAST" or not spellID then return end
-
-      local dur       = GetAuraDurationBySpellID(spellID)
+	  
       local spellName = SpellInfo(spellID)
+	  local found, myCast = inAuras(spellName)
 
-      local _, playerGUID = UnitExists("player")
-      playerGUID = gsub(playerGUID, "^0x", "")
-      casterGUID = gsub(casterGUID or "", "^0x", "")
-      if targetGUID then targetGUID = gsub(targetGUID, "^0x", "") end
+	  if found and spellID then
 
-      if dur and dur > 0 and simpleAuras.updating == 0 and casterGUID == playerGUID then
-        sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
-        sA.auraTimers[targetGUID][spellID] = timestamp + dur
-      elseif casterGUID == playerGUID then
-        if not targetGUID or targetGUID == "" then targetGUID = playerGUID end
-        ActiveCasts[targetGUID] = ActiveCasts[targetGUID] or {}
-        ActiveCasts[targetGUID][spellID] = timestamp
-        sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
-        sA.auraTimers[targetGUID][spellID] = timestamp + 3600
-		sA.learnNew = 1
-        if simpleAuras.updating == 1 then
-          sA:Msg("Updating duration for " .. (spellName or spellID) .. " ("..spellID..") - wait for it to fade.")
-        end
-      end
+		  if sA.playerGUID then
+			sA.playerGUID = gsub(sA.playerGUID, "^0x", "")
+		  else
+			local _, playerGUID = UnitExists("player")
+			sA.playerGUID = playerGUID
+		  end
+		  
+		  casterGUID = gsub(casterGUID or "", "^0x", "")
+		  if targetGUID then targetGUID = gsub(targetGUID, "^0x", "") end
+
+		  local dur = GetAuraDurationBySpellID(spellID,casterGUID)
+	  
+		  if dur and dur > 0 and simpleAuras.updating == 0 then
+			sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
+			sA.auraTimers[targetGUID][spellID] = sA.auraTimers[targetGUID][spellID] or {}
+			sA.auraTimers[targetGUID][spellID].duration = timestamp + dur
+			sA.auraTimers[targetGUID][spellID].castby = casterGUID
+			sA.learnNew[spellID] = nil
+		  elseif casterGUID == sA.playerGUID or myCast == 0 then
+		  
+			if not targetGUID or targetGUID == "" then targetGUID = sA.playerGUID end
+			
+			ActiveCasts[targetGUID] = ActiveCasts[targetGUID] or {}
+			ActiveCasts[targetGUID][spellID] = ActiveCasts[targetGUID][spellID] or {}
+			ActiveCasts[targetGUID][spellID].duration = timestamp
+			ActiveCasts[targetGUID][spellID].castby = casterGUID
+			
+			sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
+			sA.auraTimers[targetGUID][spellID] = sA.auraTimers[targetGUID][spellID] or {}
+			sA.auraTimers[targetGUID][spellID].duration = 0
+			sA.auraTimers[targetGUID][spellID].castby = casterGUID
+			
+			if targetGUID ~= sA.playerGUID then
+				sA.learnNew[spellID] = 1 
+			end
+			
+			if simpleAuras.updating == 1 then
+			  sA:Msg("Updating " .. (spellName or spellID) .. " (ID:"..spellID..")...")
+			elseif simpleAuras.showlearned == 1 then
+			  sA:Msg("Learning " .. (spellName or spellID) .. " (ID:"..spellID..")...")
+			end
+			
+		  end
+		  
+	  end
+	  
     end
   end)
 end
@@ -124,62 +176,77 @@ end
 -- Timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 sAEvent:SetScript("OnUpdate", function()
+
+	local time = GetTime()
+	local refreshRate = 1 / (simpleAuras.refresh or 5)
+	if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
+		
   -- Cache the UI scale in a safe context
   sA.uiScale = UIParent:GetEffectiveScale()
 
   -- Handle Move Mode with Ctrl Key
   local mainFrame = _G["sAGUI"]
   if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() and IsAltKeyDown() and IsShiftKeyDown() then
-  
-	-- TestAura
-	if sA.TestAura and sA.TestAura:IsVisible() then
-	
-		sA.draggers[0]:Show()
-		gui:SetAlpha(0)
-		gui.editor:SetAlpha(0)
-		
-	else
-  
-		-- Continuously show draggers for any visible frames while in move mode
-		for id, frame in pairs(sA.frames) do
-		  if frame:IsVisible() and sA.draggers[id] then
-			sA.draggers[id]:Show()
+
+	if sA.moveAuras ~= 1 then
+			
+		-- TestAura
+		if sA.TestAura and sA.TestAura:IsVisible() then
+			
+			sA.draggers[0]:Show()
 			gui:SetAlpha(0)
-			if gui.editor then
-			  gui.editor:SetAlpha(0)
+			gui.editor:SetAlpha(0)
+			
+		else
+	  
+			-- Continuously show draggers for any visible frames while in move mode
+			for id, frame in pairs(sA.frames) do
+			  if frame:IsVisible() and sA.draggers[id] then
+				sA.draggers[id]:Show()
+				gui:SetAlpha(0)
+				if gui.editor then
+				  gui.editor:SetAlpha(0)
+				end
+			  end
 			end
-		  end
+			
 		end
-		
+
+		sA.moveAuras = 1
+
 	end
 	
   else
-	
-	-- Hide all draggers when not in move mode
-    for id, dragger in pairs(sA.draggers) do
-      if dragger then
-		dragger:Hide()
-        gui:SetAlpha(1)
-		if gui.editor then
-          gui.editor:SetAlpha(1)
+
+	if sA.moveAuras == 1 then
+				
+		-- Hide all draggers when not in move mode
+	    for id, dragger in pairs(sA.draggers) do
+	      if dragger then
+			dragger:Hide()
+	        gui:SetAlpha(1)
+			if gui.editor then
+	          gui.editor:SetAlpha(1)
+			end
+		  end
+	    end
+		
+		-- Reload data if in editor
+		if gui.editor and gui.auraEdit and sA.draggers[0] and sA.draggers[0]:IsVisible() then
+			
+			sA:SaveAura(gui.auraEdit)
+			
 		end
-	  end
-    end
-	
-	-- Reload data if in editor
-	if gui.editor and gui.auraEdit and sA.draggers[0] and sA.draggers[0]:IsVisible() then
-		
-		sA:SaveAura(gui.auraEdit)
-		
+
+		sA.moveAuras = 0
+
 	end
 	
   end
-
-  local time = GetTime()
-  local refreshRate = 1 / (simpleAuras.refresh or 5)
-  if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
+		
   sAEvent.lastUpdate = time
   sA:UpdateAuras()
+		
 end)
 
 -- Combat state
@@ -270,6 +337,51 @@ SlashCmdList["sA"] = function(msg)
 		return
 	end
 	
+	-- track others
+	if cmd == "showlearned" then
+		if sA.SuperWoW then
+			local num = tonumber(val)
+			if num and num >= 0 and num <= 1 then
+				simpleAuras.showlearned = num
+				sA:Msg("ShowLearned status set to " .. num)
+			else
+				sA:Msg("/sa showlearned X - shows new AuraDurations learned in chat (1 = show. Default: 0)")
+				sA:Msg("Current ShowLearned status = " .. tostring(simpleAuras.showlearned or 0))
+			end
+			return
+		else
+			sA:Msg("/sa showlearned needs SuperWoW to be installed!")
+		end
+		return
+	end
+	
+	-- delete
+	if cmd == "delete" then
+		local arg = val
+		if val and val == "all" then
+			simpleAuras.auradurations = {}
+			sA:Msg("All learned AuraDurations deleted.")
+		elseif val and val == "1" then
+			local _, unitGUID = UnitExists("target")
+			if not unitGUID then sA:Msg("No unit selected.") return end
+			unitGUID = gsub(unitGUID, "^0x", "")
+			for spellID, units in pairs(simpleAuras.auradurations) do
+				if type(units) == "table" and units[unitGUID] then
+					units[unitGUID] = nil
+					if next(units) == nil then
+						simpleAuras.auradurations[spellID] = nil
+					end
+				elseif type(units) ~= "table" and simpleAuras.auradurations[spellID] then
+					simpleAuras.auradurations[spellID] = nil
+				end
+			end
+			sA:Msg("All learned AuraDurations casted by unitGUID "..unitGUID.." deleted.")
+		else
+			sA:Msg("/sa delete 1 - Delete all learned AuraDurations of your target (or use 'all' instead of 1 to delete all durations).")
+		end
+		return
+	end
+	
 
 	-- help or unknown command fallback
 	sA:Msg("Usage:")
@@ -277,5 +389,7 @@ SlashCmdList["sA"] = function(msg)
 	sA:Msg("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
 	sA:Msg("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
 	sA:Msg("/sa learn X Y - manually set duration Y for aura with ID X.")
+	sA:Msg("/sa showlearned X - shows new AuraDurations learned in chat (1 = show. Default: 0)")
+	sA:Msg("/sa delete 1 - Delete all learned AuraDurations of your target (or use 'all' instead of 1 to delete all durations).")
 
 end
