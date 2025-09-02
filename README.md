@@ -22,8 +22,8 @@
 Shows all existing auras.
 
 - [+] / Add Aura: Creates a new, blank aura.
-- [I] / Import: Opens a window to import one or multiple auras from a text string.
-- [E] / Export: Exports all your auras into a single text string.
+- [i] / Import: Opens a window to import one or multiple auras from a text string.
+- [e] / Export: Exports all your auras into a single text string.
 - v / ^: Sort aura priority (higher in the list = will be shown over other auras below)
 - Movable Auras: While in settings, you can move any visible aura by holding down `Ctrl`+`Alt`+`Shift` keys and dragging it.
 
@@ -67,7 +67,7 @@ Cooldown:
 
 Other:
 - [c] / Copy: Copies the aura.
-- [E] / Export: Exports only the current aura into a text string.
+- [e] / Export: Exports only the current aura into a text string.
 - Delete: Deletes the aura after confirmation.
 
 \* = For these functions to work on targets SuperWoW is REQUIRED!
