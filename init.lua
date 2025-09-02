@@ -397,3 +397,4 @@ SlashCmdList["sA"] = function(msg)
 	sA:Msg("/sa delete 1 - Delete all learned AuraDurations of your target (or use 'all' instead of 1 to delete all durations).")
 
 end
+
