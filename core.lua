@@ -84,7 +84,7 @@ end
 -------------------------------------------------
 -- SuperWoW-aware aura search
 -------------------------------------------------
-local function find_aura(name, unit, auratype)
+local function find_aura(name, unit, auratype, myCast)
   local function search(is_debuff)
     local i = (unit == "Player") and 0 or 1
     while true do
@@ -95,15 +95,24 @@ local function find_aura(name, unit, auratype)
         tex, stacks, sid, rem = GetPlayerBuffTexture(bid), GetPlayerBuffApplications(bid), GetPlayerBuffID(bid), GetPlayerBuffTimeLeft(bid)
       else
         if is_debuff then
-          tex, stacks, _, sid, rem = UnitDebuff(unit, i)
+          tex, stacks, caster, sid, rem = UnitDebuff(unit, i)
         else
           tex, stacks, sid, rem = UnitBuff(unit, i)
         end
+		
       end
 
       if not tex then break end
       if sid and name == SpellInfo(sid) then
-        return true, stacks, sid, rem, tex
+		local _, unitGUID = UnitExists(unit)
+		if unitGUID then unitGUID = gsub(unitGUID, "^0x", "") end
+		if ( sA.auraTimers
+			 and sA.auraTimers[unitGUID]
+			 and sA.auraTimers[unitGUID][sid]
+			 and sA.auraTimers[unitGUID][sid].castby == sA.playerGUID
+		   ) or (myCast == 0) or (unit == "Player") then
+			return true, stacks, sid, rem, tex
+		end
       end
       i = i + 1
     end
@@ -126,13 +135,13 @@ end
 -------------------------------------------------
 -- Get Icon / Duration / Stacks (SuperWoW)
 -------------------------------------------------
-function sA:GetSuperAuraInfos(name, unit, auratype)
+function sA:GetSuperAuraInfos(name, unit, auratype, myCast)
   if auratype == "Cooldown" then
     local texture, remaining_time = self:GetCooldownInfo(name)
-    return texture, remaining_time, 1
+    return _, texture, remaining_time, 1
   end
 
-  local found, stacks, spellID, remaining_time, texture = find_aura(name, unit, auratype)
+  local found, stacks, spellID, remaining_time, texture = find_aura(name, unit, auratype, myCast)
   if not found then return end
 
   -- Fallback for missing remaining_time
@@ -141,13 +150,13 @@ function sA:GetSuperAuraInfos(name, unit, auratype)
     if unitGUID then
       unitGUID = gsub(unitGUID, "^0x", "")
       local timers = sA.auraTimers[unitGUID]
-      if timers and timers[spellID] then
-        local expiry = timers[spellID]
+      if timers and timers[spellID] and timers[spellID].duration then
+        local expiry = timers[spellID].duration
         remaining_time = (expiry > GetTime()) and (expiry - GetTime()) or 0
       end
     end
   end
-  return texture, remaining_time, stacks
+  return spellID, texture, remaining_time, stacks
 end
 
 -------------------------------------------------
@@ -305,7 +314,7 @@ function sA:UpdateAuras()
     -- This prevents errors when a new, unconfigured aura exists.
     if aura and aura.name then
       local show, icon, duration, stacks
-      local currentDuration, currentStacks, currentDurationtext = 600, 20, ""
+      local currentDuration, currentStacks, currentDurationtext, spellID = 600, 20, "", nil
 
       local frame     = self.frames[id]     or CreateAuraFrame(id)
       local dualframe = self.dualframes[id] or (aura.dual == 1 and CreateDualFrame(id))
@@ -335,7 +344,7 @@ function sA:UpdateAuras()
           if targetCheckPassed then
             -- Get aura data (icon indicates presence)
             if sA.SuperWoW then
-                icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
+                spellID, icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type, aura.myCast)
             else
                 icon, duration, stacks = self:GetAuraInfos(aura.name, aura.unit, aura.type)
             end
@@ -366,8 +375,9 @@ function sA:UpdateAuras()
       if shouldShow then
         -- Get fresh aura data only if we are going to show it
         if not (icon or aura.name) then -- Data might not have been fetched in /sa mode
+		  spellID = nil
           if sA.SuperWoW then
-            icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
+            spellID, icon, duration, stacks = self:GetSuperAuraInfos(aura.name, aura.unit, aura.type)
           else
             icon, duration, stacks = self:GetAuraInfos(aura.name, aura.unit, aura.type)
           end
@@ -385,7 +395,9 @@ function sA:UpdateAuras()
         -- Duration text
         -------------------------------------------------
         if aura.duration == 1 and currentDuration then
-          if currentDuration > 100 then
+          if sA.SuperWoW and sA.learnNew[spellID] and sA.learnNew[spellID] == 1 then
+			currentDurationtext = "learning"
+          elseif currentDuration > 100 then
             currentDurationtext = floor(currentDuration / 60 + 0.5) .. "m"
 		  elseif currentDuration <= (aura.lowdurationvalue or 5) then
             currentDurationtext = format("%.1f", floor(currentDuration * 10 + 0.5) / 10)
@@ -402,6 +414,11 @@ function sA:UpdateAuras()
         -- Apply visuals
         -------------------------------------------------
         local scale = aura.scale or 1
+		if currentDurationtext == "learning" then
+			textscale = scale/2
+		else
+			textscale = scale
+		end
         frame:SetPoint("CENTER", UIParent, "CENTER", aura.xpos or 0, aura.ypos or 0)
         frame:SetFrameLevel(128 - id)
         frame:SetWidth(48 * scale)
@@ -409,7 +426,7 @@ function sA:UpdateAuras()
         frame.texture:SetTexture(aura.texture)
         frame.durationtext:SetText((aura.duration == 1 and (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown")) and currentDurationtext or "")
         frame.stackstext:SetText((aura.stacks == 1) and currentStacks or "")
-        if aura.duration == 1 then frame.durationtext:SetFont(FONT, 20 * scale, "OUTLINE") end
+        if aura.duration == 1 then frame.durationtext:SetFont(FONT, 20 * textscale, "OUTLINE") end
         if aura.stacks   == 1 then frame.stackstext:SetFont(FONT, 14 * scale, "OUTLINE") end
 
         local color = (aura.lowduration == 1 and currentDuration and currentDuration <= aura.lowdurationvalue)
@@ -425,7 +442,7 @@ function sA:UpdateAuras()
 
         local durationcolor = {1.0, 0.82, 0.0, alpha}
         local stackcolor    = {1, 1, 1, alpha}
-        if (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown") and (currentDuration and currentDuration <= (aura.lowdurationvalue or 5)) then
+        if (sA.SuperWoW or aura.unit == "Player" or aura.type == "Cooldown") and (currentDuration and currentDuration <= (aura.lowdurationvalue or 5)) and currentDurationtext ~= "learning" then
           durationcolor = {1, 0, 0, alpha}
         end
         frame.durationtext:SetTextColor(unpack(durationcolor))
@@ -466,4 +483,3 @@ function sA:UpdateAuras()
     end
   end
 end
-
