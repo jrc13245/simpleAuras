@@ -289,6 +289,7 @@ function sA:SaveAura(id)
   local data = simpleAuras.auras[id]
   data.name            = ed.name:GetText()
   data.enabled         = ed.enabled.value
+  data.myCast          = ed.myCast.value
   data.auracolor       = ed.auracolor
   data.autodetect      = ed.autoDetect.value
   data.texture         = ed.texturePath:GetText()
@@ -333,7 +334,7 @@ function sA:AddAura(copyId)
   if copyId and simpleAuras.auras[copyId] then
     simpleAuras.auras[newId] = deepCopy(simpleAuras.auras[copyId])
   else
-    simpleAuras.auras[newId] = {["dual"]=0,["scale"]=1,["inParty"]=0,["unit"]="Player",["stacks"]=0,["showCD"]="Always",["invert"]=0,["texture"]="Interface\\Icons\\INV_Misc_QuestionMark",["enabled"]=1,["type"]="Buff",["inRaid"]=0,["ypos"]=0,["inCombat"]=1,["outCombat"]=1,["autodetect"]=0,["auracolor"]={[1]=1,[2]=1,[3]=1,[4]=1},["name"]="",["lowduration"]=0,["lowdurationcolor"]={[1]=1,[2]=0,[3]=0,[4]=1},["xpos"]=0,["duration"]=0,["lowdurationvalue"]=5}
+    simpleAuras.auras[newId] = {["enabled"]=1,["myCast"]=0,["name"]="",["auracolor"]={[1]=1,[2]=1,[3]=1,[4]=1},["autodetect"]=0,["texture"]="Interface\\Icons\\INV_Misc_QuestionMark",["scale"]=1,["xpos"]=0,["ypos"]=0,["duration"]=0,["stacks"]=0,["type"]="Buff",["unit"]="Player",["showCD"]="Always",["lowduration"]=0,["lowdurationcolor"]={[1]=1,[2]=0,[3]=0,[4]=1},["lowdurationvalue"]=5,["inCombat"]=1,["outCombat"]=1,["inParty"]=0,["inRaid"]=0,["invert"]=0,["dual"]=0}
   end
   if gui.editor and gui.editor:IsShown() then
     gui.editor:Hide()
@@ -392,6 +393,32 @@ function sA:EditAura(id)
     ed.enabledLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.enabledLabel:SetPoint("LEFT", ed.enabled, "RIGHT", 5, 0)
     ed.enabledLabel:SetText("Enabled")
+
+	if sA.SuperWoW then
+		-- MyCast Checkbox
+		ed.myCast = CreateFrame("Button", nil, ed)
+		ed.myCast:SetWidth(16)
+		ed.myCast:SetHeight(16)
+		ed.myCast:SetPoint("LEFT", ed.enabledLabel, "RIGHT", 95, 0)
+		sA:SkinFrame(ed.myCast, {0.15,0.15,0.15,1})
+		ed.myCast:SetScript("OnEnter", function() ed.myCast:SetBackdropColor(0.5,0.5,0.5,1) end)
+		ed.myCast:SetScript("OnLeave", function() ed.myCast:SetBackdropColor(0.15,0.15,0.15,1) end)
+		ed.myCast.checked = ed.myCast:CreateTexture(nil, "OVERLAY")
+		ed.myCast.checked:SetTexture("Interface\\Buttons\\WHITE8x8")
+		ed.myCast.checked:SetVertexColor(1, 0.8, 0.06, 1)
+		ed.myCast.checked:SetPoint("CENTER", ed.myCast, "CENTER", 0, 0)
+		ed.myCast.checked:SetWidth(7)
+		ed.myCast.checked:SetHeight(7)
+		ed.myCast.value = 1
+		ed.myCast:SetScript("OnClick", function(self)
+		  ed.myCast.value = 1 - (ed.myCast.value or 0)
+		  if ed.myCast.value == 1 then ed.myCast.checked:Show() else ed.myCast.checked:Hide() end
+		  sA:SaveAura(id)
+		end)
+		ed.myCastLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		ed.myCastLabel:SetPoint("LEFT", ed.myCast, "RIGHT", 5, 0)
+		ed.myCastLabel:SetText("My Casts only")
+	end
  
     -- Name
     ed.nameLabel = ed:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1006,6 +1033,10 @@ function sA:EditAura(id)
   ed.title:SetText("[" .. tostring(id) .. "] " .. (aura.name ~= "" and aura.name or "<unnamed>"))
   ed.enabled.value = aura.enabled or 1
   if ed.enabled.value == 1 then ed.enabled.checked:Show() else ed.enabled.checked:Hide() end
+  if ed.myCast then
+	  ed.myCast.value = aura.myCast or 0
+	  if ed.myCast.value == 1 then ed.myCast.checked:Show() else ed.myCast.checked:Hide() end
+  end
   ed.name:SetText(aura.name or "")
   ed.auracolor = aura.auracolor or {1,1,1,1}
   ed.auracolorpicker = ed.auracolorpicker -- ensure exists
@@ -1126,6 +1157,7 @@ function sA:EditAura(id)
       ed.confirm:Hide()
       ed:Hide()
       gui.editor = nil
+      gui.auraEdit = nil
       sA:RefreshAuraList()
       sA.TestAura:Hide()
       sA.TestAuraDual:Hide()
@@ -1598,7 +1630,12 @@ function sA:ImportAuras(importString)
 
     if importedCount > 0 then
         sA:Msg(importedCount .. " aura(s) imported successfully.")
-        sA:RefreshAuraList()
+		if importedCount == 1 then
+			local newId = table.getn(simpleAuras.auras)
+			sA:EditAura(newId)
+		else
+			sA:RefreshAuraList()
+		end
     else
         sA:Msg("No valid auras found in the import string.")
     end
