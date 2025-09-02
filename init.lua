@@ -4,6 +4,7 @@ simpleAuras = simpleAuras or {}
 -- runtime only
 sA = sA or { auraTimers = {}, frames = {}, dualframes = {}, draggers = {} }
 sA.SuperWoW = SetAutoloot and true or false
+sA.learnNew = nil
 
 -- perf: cache globals we use a lot (Lua 5.0-safe)
 local gsub   = string.gsub
@@ -279,3 +280,4 @@ SlashCmdList["sA"] = function(msg)
 	sA:Msg("/sa learn X Y - manually set duration Y for aura with ID X.")
 
 end
+
