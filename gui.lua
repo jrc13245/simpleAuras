@@ -145,7 +145,7 @@ exportAllBtn:SetHeight(20)
 sA:SkinFrame(exportAllBtn, {0.2, 0.2, 0.2, 1})
 exportAllBtn.text = exportAllBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 exportAllBtn.text:SetPoint("CENTER", exportAllBtn, "CENTER", 0, 0)
-exportAllBtn.text:SetText("E")
+exportAllBtn.text:SetText("e")
 exportAllBtn:SetScript("OnClick", function() sA:ExportAllAuras() end)
 exportAllBtn:SetScript("OnEnter", function() exportAllBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
 exportAllBtn:SetScript("OnLeave", function() exportAllBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
@@ -158,7 +158,7 @@ importBtn:SetHeight(20)
 sA:SkinFrame(importBtn, {0.2, 0.2, 0.2, 1})
 importBtn.text = importBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 importBtn.text:SetPoint("CENTER", importBtn, "CENTER", 0, 0)
-importBtn.text:SetText("I")
+importBtn.text:SetText("i")
 importBtn:SetScript("OnClick", function() sA:ShowImportFrame() end)
 importBtn:SetScript("OnEnter", function() importBtn:SetBackdropColor(0.5, 0.5, 0.5, 1) end)
 importBtn:SetScript("OnLeave", function() importBtn:SetBackdropColor(0.2, 0.2, 0.2, 1) end)
@@ -995,7 +995,7 @@ function sA:EditAura(id)
     sA:SkinFrame(ed.export, {0.2,0.2,0.2,1})
     ed.export.text = ed.export:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     ed.export.text:SetPoint("CENTER", 0.5, 1)
-    ed.export.text:SetText("E")
+    ed.export.text:SetText("e")
     ed.export:SetScript("OnEnter", function() ed.export:SetBackdropColor(0.5,0.5,0.5,1) end)
     ed.export:SetScript("OnLeave", function() ed.export:SetBackdropColor(0.2,0.2,0.2,1) end)
 
@@ -1606,4 +1606,5 @@ end
 
 -- Init
 sA:RefreshAuraList()
+
 
