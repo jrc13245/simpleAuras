@@ -385,9 +385,7 @@ function sA:UpdateAuras()
         -- Duration text
         -------------------------------------------------
         if aura.duration == 1 and currentDuration then
-          if sA.learnNew and sA.learnNew == 1 then
-			currentDurationtext = "learn"
-          elseif currentDuration > 100 then
+          if currentDuration > 100 then
             currentDurationtext = floor(currentDuration / 60 + 0.5) .. "m"
 		  elseif currentDuration <= (aura.lowdurationvalue or 5) then
             currentDurationtext = format("%.1f", floor(currentDuration * 10 + 0.5) / 10)
@@ -468,3 +466,4 @@ function sA:UpdateAuras()
     end
   end
 end
+
