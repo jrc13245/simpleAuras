@@ -326,10 +326,14 @@ SlashCmdList["sA"] = function(msg)
 			local spell = tonumber(val)
 			local fade = tonumber(fad)
 			if spell and fade then
-				simpleAuras.auradurations[spell] = fade
-				sA:Msg("Set Duration of "..SpellInfo(spell).."("..spell..") to " .. fade .. " seconds.")
+				local _, unitGUID = UnitExists("target")
+				if not unitGUID then sA:Msg("No unit selected.") return end
+				unitGUID = gsub(unitGUID, "^0x", "")
+				simpleAuras.auradurations[spell] = simpleAuras.auradurations[spell] or {}
+				simpleAuras.auradurations[spell][unitGUID] = fade
+				sA:Msg("Set Duration of "..SpellInfo(spell).."("..spell..") cast by "..unitGUID.." to " .. fade .. " seconds.")
 			else
-				sA:Msg("/sa learn spellID Duration - manually set duration of spell.")
+				sA:Msg("/sa learn X Y - manually set duration Y of spellID X cast by current target.")
 			end
 		else
 			sA:Msg("/sa learn needs SuperWoW to be installed!")
@@ -388,7 +392,7 @@ SlashCmdList["sA"] = function(msg)
 	sA:Msg("/sa or /sa show or /sa hide - Show/hide simpleAuras Settings")
 	sA:Msg("/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)")
 	sA:Msg("/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)")
-	sA:Msg("/sa learn X Y - manually set duration Y for aura with ID X.")
+	sA:Msg("/sa learn X Y - manually set duration Y of spellID X cast by current target.")
 	sA:Msg("/sa showlearned X - shows new AuraDurations learned in chat (1 = show. Default: 0)")
 	sA:Msg("/sa delete 1 - Delete all learned AuraDurations of your target (or use 'all' instead of 1 to delete all durations).")
 
