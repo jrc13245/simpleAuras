@@ -12,7 +12,11 @@
 ### SuperWoW commands:
 /sa update X - force aura durations updates (1 = learn aura durations. Default: 0)
 
-/sa learn X Y - manually set duration Y for aura with ID X.
+/sa learn X Y - manually set duration Y of spellID X cast by current target.
+
+/sa showlearned X - shows new AuraDurations learned in chat (1 = show. Default: 0)
+
+/sa delete 1 - Delete all learned AuraDurations of your target (or use 'all' instead of 1 to delete all durations).
 
 
 ## Settings (/sa)
@@ -33,6 +37,9 @@ Shows the currently edited aura only.
 
 Enabled/Disabled:
 - A master toggle at the top of the editor to quickly turn an aura on or off. Disabled auras are highlighted in red in the main list.
+
+My Casts only:
+- Only tracks your own casts of edited aura.
 
 Aura/Spellname Name:
 - Name of the aura to track (has to be exactly the same name)
