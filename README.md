@@ -20,7 +20,8 @@
 
 
 ## Settings (/sa)
-<img width="819" height="604" alt="image" src="https://github.com/user-attachments/assets/f6899066-f5d2-4a79-a699-a816f743f833" />
+<img width="814" height="600" alt="image" src="https://github.com/user-attachments/assets/8f27947f-8477-41ec-8507-e41ec7af0008" />
+
 
 ### Overview
 Shows all existing auras.
