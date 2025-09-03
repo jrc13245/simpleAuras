@@ -4,6 +4,11 @@
 <img width="508" height="322" alt="image" src="https://github.com/user-attachments/assets/15338563-4fbd-454c-9609-3d95f0214cc0" />
 
 
+## Known Issues
+Learning, Duration and icon display is bugged at the moment, it doesn't properly track them.
+please use my casts only for now till i have the time to fix it (sorry - a lot going on at work irl atm).
+
+
 ## Console Commands:
 /sa or /sa show or /sa hide - Show/hide simpleAuras Settings
 
@@ -87,7 +92,6 @@ If SuperWoW is installed, simpleAuras will automatically learn unkown durations 
 Some Spells aren't properly tracked because they use different names during apply and fade or don't trigger the event used to track them (Enlighten -> Enlightened and Weakened Soul for example).
 
 In those cases, use "/sa learn X Y" to manually set duration Y for aura with ID X.
-
 
 ## Special Thanks / Credits
 - Torio ([SuperCleveRoidMacros](https://github.com/jrc13245/SuperCleveRoidMacros))
