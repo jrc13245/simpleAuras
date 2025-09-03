@@ -135,7 +135,7 @@ if sA.SuperWoW then
 
 		  local dur = GetAuraDurationBySpellID(spellID,casterGUID)
 	  
-		  if dur and dur > 0 and simpleAuras.updating == 0 then
+		  if dur and dur > 0 and simpleAuras.updating == 0 and (casterGUID == sA.playerGUID or myCast == 0) then
 			sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
 			sA.auraTimers[targetGUID][spellID] = sA.auraTimers[targetGUID][spellID] or {}
 			sA.auraTimers[targetGUID][spellID].duration = timestamp + dur
@@ -397,4 +397,5 @@ SlashCmdList["sA"] = function(msg)
 	sA:Msg("/sa delete 1 - Delete all learned AuraDurations of your target (or use 'all' instead of 1 to delete all durations).")
 
 end
+
 
