@@ -334,7 +334,7 @@ function sA:AddAura(copyId)
   if copyId and simpleAuras.auras[copyId] then
     simpleAuras.auras[newId] = deepCopy(simpleAuras.auras[copyId])
   else
-    simpleAuras.auras[newId] = {["enabled"]=1,["myCast"]=0,["name"]="",["auracolor"]={[1]=1,[2]=1,[3]=1,[4]=1},["autodetect"]=0,["texture"]="Interface\\Icons\\INV_Misc_QuestionMark",["scale"]=1,["xpos"]=0,["ypos"]=0,["duration"]=0,["stacks"]=0,["type"]="Buff",["unit"]="Player",["showCD"]="Always",["lowduration"]=0,["lowdurationcolor"]={[1]=1,[2]=0,[3]=0,[4]=1},["lowdurationvalue"]=5,["inCombat"]=1,["outCombat"]=1,["inParty"]=0,["inRaid"]=0,["invert"]=0,["dual"]=0}
+    simpleAuras.auras[newId] = {["enabled"]=1,["myCast"]=1,["name"]="",["auracolor"]={[1]=1,[2]=1,[3]=1,[4]=1},["autodetect"]=0,["texture"]="Interface\\Icons\\INV_Misc_QuestionMark",["scale"]=1,["xpos"]=0,["ypos"]=0,["duration"]=0,["stacks"]=0,["type"]="Buff",["unit"]="Player",["showCD"]="Always",["lowduration"]=0,["lowdurationcolor"]={[1]=1,[2]=0,[3]=0,[4]=1},["lowdurationvalue"]=5,["inCombat"]=1,["outCombat"]=1,["inParty"]=0,["inRaid"]=0,["invert"]=0,["dual"]=0}
   end
   if gui.editor and gui.editor:IsShown() then
     gui.editor:Hide()
@@ -1643,5 +1643,6 @@ end
 
 -- Init
 sA:RefreshAuraList()
+
 
 
