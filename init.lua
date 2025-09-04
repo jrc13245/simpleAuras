@@ -123,14 +123,14 @@ if sA.SuperWoW then
 
 	  if found and spellID then
 
-		  if sA.playerGUID then
-			sA.playerGUID = gsub(sA.playerGUID, "^0x", "")
-		  else
-			local _, playerGUID = UnitExists("player")
-			sA.playerGUID = playerGUID
+		  -- Get a fresh player GUID each time to avoid stale data and normalize it.
+		  local _, freshPlayerGUID = UnitExists("player")
+		  if freshPlayerGUID then
+			  sA.playerGUID = gsub(freshPlayerGUID, "^0x", "")
 		  end
 		  
-		  casterGUID = gsub(casterGUID or "", "^0x", "")
+		  -- Normalize other GUIDs for reliable comparison
+		  if casterGUID then casterGUID = gsub(casterGUID, "^0x", "") end
 		  if targetGUID then targetGUID = gsub(targetGUID, "^0x", "") end
 
 		  local dur = GetAuraDurationBySpellID(spellID,casterGUID)
@@ -155,8 +155,9 @@ if sA.SuperWoW then
 			sA.auraTimers[targetGUID][spellID].duration = 0
 			sA.auraTimers[targetGUID][spellID].castby = casterGUID
 			
-			if targetGUID ~= sA.playerGUID then
-				sA.learnNew[spellID] = 1 
+			-- Only learn auras that are not cast by the player
+			if casterGUID ~= sA.playerGUID then
+				sA.learnNew[spellID] = 1
 			end
 			
 			if simpleAuras.updating == 1 then
