@@ -262,6 +262,26 @@ sACombat:SetScript("OnEvent", function()
   end
 end)
 
+-- Rebuild auras table on login to prevent issues with "holes" from deleted auras
+local sAOnLogin = CreateFrame("Frame")
+sAOnLogin:RegisterEvent("PLAYER_LOGIN")
+sAOnLogin:SetScript("OnEvent", function()
+  if simpleAuras and simpleAuras.auras then
+    local cleanAuras = {}
+    -- Use pairs to safely iterate over a table that might have missing numerical keys
+    for id, aura in pairs(simpleAuras.auras) do
+      -- Ensure we only copy actual aura entries (numeric keys, table values with content)
+      if type(id) == "number" and type(aura) == "table" and aura.name then
+        table.insert(cleanAuras, aura)
+      end
+    end
+    simpleAuras.auras = cleanAuras
+  end
+
+  -- Unregister the event after it has run once to save resources
+  sAOnLogin:UnregisterEvent("PLAYER_LOGIN")
+end)
+
 ---------------------------------------------------
 -- Slash Commands
 ---------------------------------------------------
