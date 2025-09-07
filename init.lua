@@ -166,6 +166,7 @@ if sA.SuperWoW then
 			sA.auraTimers[targetGUID] = sA.auraTimers[targetGUID] or {}
 			sA.auraTimers[targetGUID][spellID] = sA.auraTimers[targetGUID][spellID] or {}
 			sA.auraTimers[targetGUID][spellID].duration = 0
+			sA.auraTimers[targetGUID][spellID].castby = casterGUID
 			
 			if casterGUID == sA.playerGUID and targetGUID ~= sA.playerGUID then
 				sA.learnNew[spellID] = 1
