@@ -8,6 +8,7 @@
 - Learning new AuraDuration gets prematurely completed if an aura with the same name on the same target of another player runs out before yours - no way to get casterID when an aura fades.
 - Having more than 16 auras shows auras outside the GUI frame (scrollframe possible, but then has more/other issues)
 - AddOn is kinda heavy on ressources (compared to other addons), will optimize in a future update.
+- /sa learnall 1 tries to learn spells without aura (i.e. smite, shadowbolt, etc.)
 
 
 ## Console Commands:
