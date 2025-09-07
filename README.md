@@ -5,7 +5,7 @@
 
 
 ## Known Issues
-- Learning new AuraDuration gets prematurely completed if an aura with the same name on the same target of another player runs out before yours - no way to get casterID when an aura fades.
+- Learning new AuraDuration gets prematurely completed if another player's aura with the same name runs out on the same target before yours - no way to get casterID when an aura fades.
 - Having more than 16 auras shows auras outside the GUI frame (scrollframe possible, but then has more/other issues)
 - AddOn is kinda heavy on ressources (compared to other addons), will optimize in a future update.
 - /sa learnall 1 tries to learn spells without aura (i.e. smite, shadowbolt, etc.)
@@ -50,7 +50,7 @@ Shows the currently edited aura only.
 Enabled/Disabled:
 - A master toggle at the top of the editor to quickly turn an aura on or off. Disabled auras are highlighted in red in the main list.
 
-My Casts only:
+My Casts only*:
 - Only tracks your own casts of edited aura.
 
 Aura/Spellname Name:
