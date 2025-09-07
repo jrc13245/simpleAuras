@@ -5,27 +5,29 @@
 
 
 ## Known Issues
-Learning, Duration and icon display is bugged at the moment, it doesn't properly track them.
-please use my casts only for now till i have the time to fix it (sorry - a lot going on at work irl atm).
+- Learning new auras gets prematurely completed if an aura with the same name of another player runs out before yours - no way to get casterID when an aura fades.
+- Having more than 16 auras shows auras outside the GUI frame (scrollframe possible, but then has more/other issues)
 
 
 ## Console Commands:
-/sa or /sa show or /sa hide - Show/hide simpleAuras Settings
+/sa or /sa show or /sa hide - Show/hide simpleAuras Settings.
 
-/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5)
+/sa refresh X - Set refresh rate. (1 to 10 updates per second. Default: 5).
 
 ### SuperWoW commands:
-/sa update X - force aura durations updates (1 = learn aura durations. Default: 0)
+/sa learn X Y - manually set duration Y of spellID X.
 
-/sa learn X Y - manually set duration Y of spellID X cast by current target.
+/sa forget X - forget AuraDuration of SpellID X (or use 'all' instead to delete all durations).
 
-/sa showlearned X - shows new AuraDurations learned in chat (1 = show. Default: 0)
+/sa update X - force AuraDurations updates (1 = re-learn aura durations. Default: 0).
 
-/sa delete 1 - Delete all learned AuraDurations of your target (or use 'all' instead of 1 to delete all durations).
+/sa showlearning X - shows learning of new AuraDurations in chat (1 = show. Default: 0).
+
+/sa learnall X - learn all AuraDurations, even if no Aura is set up. (1 = Active. Default: 0).
 
 
 ## Settings (/sa)
-<img width="814" height="600" alt="image" src="https://github.com/user-attachments/assets/8f27947f-8477-41ec-8507-e41ec7af0008" />
+<img width="819" height="605" alt="image" src="https://github.com/user-attachments/assets/ffd56904-f840-41b5-80bd-63550fef2ba3" />
 
 
 ### Overview
@@ -35,6 +37,8 @@ Shows all existing auras.
 - [i] / Import: Opens a window to import one or multiple auras from a text string.
 - [e] / Export: Exports all your auras into a single text string.
 - v / ^: Sort aura priority (higher in the list = will be shown over other auras below)
+
+  *(you can also sort auras via drag & drop)*
 - Movable Auras: While in settings, you can move any visible aura by holding down `Ctrl`+`Alt`+`Shift` keys and dragging it.
 
 
@@ -57,7 +61,7 @@ Icon/Texture:
 - Browse: Choose a texture.
 - Scale: Basescale of 1 is 48x48px.
 - x/y pos: Position from center of the screen.
-- Show Duration*/Stacks*: Shows Duration in the center of the icon/texture, stacks are under that.
+- Show Duration*/Stacks: Shows Duration in the center of the icon/texture, stacks are under that.
 
 
 Conditions:
@@ -83,7 +87,7 @@ Other:
 - [e] / Export: Exports only the current aura into a text string.
 - Delete: Deletes the aura after confirmation.
 
-\* = For these functions to work on targets SuperWoW is REQUIRED!
+\* = For these functions to work on targets SuperWoW is REQUIRED! Also only shows your own AuraDurations.
 
 
 ## SuperWoW Features
