@@ -365,7 +365,9 @@ function sA:SaveAura(id)
   local data = simpleAuras.auras[id]
   data.name            = ed.name:GetText()
   data.enabled         = ed.enabled.value
-  data.myCast          = ed.myCast.value
+  if sA.SuperWoW then
+	data.myCast          = ed.myCast.value
+  end
   data.auracolor       = ed.auracolor
   data.autodetect      = ed.autoDetect.value
   data.texture         = ed.texturePath:GetText()
