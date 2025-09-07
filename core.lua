@@ -108,7 +108,7 @@ local function find_aura(name, unit, auratype, myCast)
 		found, foundstacks, foundsid, foundrem, foundtex = 1, stacks, sid, rem, tex
 		local _, unitGUID = UnitExists(unit)
 		if unitGUID then unitGUID = gsub(unitGUID, "^0x", "") end
-		if (sA.auraTimers[unitGUID] and sA.auraTimers[unitGUID][sid] and sA.auraTimers[unitGUID][sid].castby and sA.auraTimers[unitGUID][sid].castby == sA.playerGUID)
+		if sA.auraTimers[unitGUID] and sA.auraTimers[unitGUID][sid] and sA.auraTimers[unitGUID][sid].castby and sA.auraTimers[unitGUID][sid].castby == sA.playerGUID
 		or (unit == "Player") then
 			return true, stacks, sid, rem, tex
 		end
