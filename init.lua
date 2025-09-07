@@ -324,7 +324,7 @@ SlashCmdList["sA"] = function(msg)
 	if cmd == "learnall" then
 		if sA.SuperWoW then
 			local num = tonumber(val)
-			if num and num >= 1 and num <= 10 then
+			if num and (num == 0 or num == 1) then
 				simpleAuras.learnall = num
 				sA:Msg("LearnAll set to " .. num)
 			else
@@ -340,7 +340,7 @@ SlashCmdList["sA"] = function(msg)
 	-- refresh command
 	if cmd == "update" or cmd == "relearn" then
 		local num = tonumber(val)
-		if num and num >= 0 and num <= 1 then
+		if num and (num == 0 or num == 1) then
 			simpleAuras.updating = num
 			sA:Msg("Aura durations update status set to " .. num)
 		else
@@ -374,7 +374,7 @@ SlashCmdList["sA"] = function(msg)
 	if cmd == "showlearning" then
 		if sA.SuperWoW then
 			local num = tonumber(val)
-			if num and num >= 0 and num <= 1 then
+			if num and (num == 0 or num == 1) then
 				simpleAuras.showlearning = num
 				sA:Msg("ShowLearning status set to " .. num)
 			else
