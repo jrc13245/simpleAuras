@@ -85,6 +85,7 @@ end
 -- SuperWoW-aware aura search
 -------------------------------------------------
 local function find_aura(name, unit, auratype, myCast)
+  local found, foundstacks, foundsid, foundrem, foundtex
   local function search(is_debuff)
     local i = (unit == "Player") and 0 or 1
     while true do
@@ -104,18 +105,19 @@ local function find_aura(name, unit, auratype, myCast)
 
       if not tex then break end
       if sid and name == SpellInfo(sid) then
+		found, foundstacks, foundsid, foundrem, foundtex = 1, stacks, sid, rem, tex
 		local _, unitGUID = UnitExists(unit)
 		if unitGUID then unitGUID = gsub(unitGUID, "^0x", "") end
-		if ( sA.auraTimers
-			 and sA.auraTimers[unitGUID]
-			 and sA.auraTimers[unitGUID][sid]
-			 and sA.auraTimers[unitGUID][sid].castby == sA.playerGUID
-		   ) or (myCast == 0) or (unit == "Player") then
+		if (sA.auraTimers[unitGUID] and sA.auraTimers[unitGUID][sid] and sA.auraTimers[unitGUID][sid].castby and sA.auraTimers[unitGUID][sid].castby == sA.playerGUID)
+		or (unit == "Player") then
 			return true, stacks, sid, rem, tex
 		end
       end
       i = i + 1
     end
+	if found == 1 and myCast == 0 then
+		return true, foundstacks, foundsid, foundrem, foundtex
+	end
     return false
   end
 
@@ -296,6 +298,9 @@ end
 -- Update aura display
 -------------------------------------------------
 function sA:UpdateAuras()
+
+  if not sA.SettingsLoaded then return end
+
   -- hide test/editor when not editing
   if not (gui and gui.editor and gui.editor:IsVisible()) then
     if sA.TestAura     then sA.TestAura:Hide() end
