@@ -2,7 +2,7 @@
 name: Bug
 about: Report a Bug
 title: "[Bug] Title"
-labels: bug
+labels: bug, feature
 assignees: yani9o
 
 ---
