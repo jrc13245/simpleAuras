@@ -1,11 +1,18 @@
 # simpleAuras
 
+### ⚠️ **Information**
+- This AddOn is still in development.
+- There will be functions that don't work as they should.
+- Please report bugs.
+- Currently don't have time to work alot on the AddOn, but i check Issues often.
+
 
 <img width="508" height="322" alt="image" src="https://github.com/user-attachments/assets/15338563-4fbd-454c-9609-3d95f0214cc0" />
 
 
 ## Known Issues
 - Learning new AuraDuration gets prematurely completed if another player's aura with the same name runs out on the same target before yours - no way to get casterID when an aura fades.
+- Skills that apply Auras with the same name may show "learning" all the time (maybe this one is fixed now - wasn't able to test yet).
 - Having more than 16 auras shows auras outside the GUI frame (scrollframe possible, but then has more/other issues)
 - AddOn is kinda heavy on ressources (compared to other addons), will optimize in a future update.
 - /sa learnall 1 tries to learn spells without aura (i.e. smite, shadowbolt, etc.)
