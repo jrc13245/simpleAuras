@@ -61,13 +61,18 @@ local function GetAuraDurationBySpellID(spellID, casterGUID)
   return simpleAuras.auradurations[spellID][casterGUID]
 end
 
-local function inAuras(spellName)
-    for _, aura in ipairs(simpleAuras.auras) do
+local function getAuraID(spellName)
+    local auraFound = {}
+    for auraID, aura in ipairs(simpleAuras.auras) do
         if aura.name == spellName then
-            return true, aura.myCast
+            table.insert(auraFound, auraID)
         end
     end
-    return false
+    if getn(auraFound) > 0 then
+        return auraFound
+    else
+        return false
+    end
 end
 
 -- SuperWoW: learn and track aura durations
@@ -130,9 +135,9 @@ if sA.SuperWoW then
       if evType ~= "CAST" or not spellID then return end
 	  
       local spellName = SpellInfo(spellID)
-	  local auraID, myCast = inAuras(spellName)
+	  local auraIDs = getAuraID(spellName)
 
-	  if (auraID or simpleAuras.learnall == 1) and spellID then
+	  if ((auraIDs and getn(auraIDs) > 0) or simpleAuras.learnall == 1) and spellID then
 
 		  if sA.playerGUID then
 			sA.playerGUID = gsub(sA.playerGUID, "^0x", "")
@@ -155,7 +160,9 @@ if sA.SuperWoW then
 			end
 			sA.learnNew[spellID] = nil
 		  elseif casterGUID == sA.playerGUID then
-		  
+
+			local showLearn = nil
+						
 			if not targetGUID or targetGUID == "" then targetGUID = sA.playerGUID end
 			
 			sA.learnCastTimers[targetGUID] = sA.learnCastTimers[targetGUID] or {}
@@ -167,8 +174,15 @@ if sA.SuperWoW then
 			sA.auraTimers[targetGUID][spellID] = sA.auraTimers[targetGUID][spellID] or {}
 			sA.auraTimers[targetGUID][spellID].duration = 0
 			sA.auraTimers[targetGUID][spellID].castby = casterGUID
-			
-			if casterGUID == sA.playerGUID and targetGUID ~= sA.playerGUID then
+									
+			for _, auraID in ipairs(auraIDs) do
+				if simpleAuras.auras[auraID].unit ~= "Player" and simpleAuras.auras[auraID].type ~= "Cooldown" then
+					showLearn = true
+					break
+				end
+			end
+						
+			if showLearn and casterGUID == sA.playerGUID and targetGUID ~= sA.playerGUID then
 				sA.learnNew[spellID] = 1
 			end
 			
@@ -440,3 +454,4 @@ SlashCmdList["sA"] = function(msg)
 	end
 
 end
+
