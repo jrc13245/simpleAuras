@@ -71,7 +71,7 @@ local function getAuraID(spellName)
     if getn(auraFound) > 0 then
         return auraFound
     else
-        return false
+        return {}
     end
 end
 
@@ -454,4 +454,5 @@ SlashCmdList["sA"] = function(msg)
 	end
 
 end
+
 
