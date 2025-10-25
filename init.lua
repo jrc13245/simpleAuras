@@ -202,74 +202,93 @@ end
 
 -- Timed updates
 local sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
+
+-- OPTIMIZATION: Cache frequently accessed values to reduce lookups
+local cachedUIScale = 1
+local cacheScaleTime = 0
+local SCALE_CACHE_INTERVAL = 1 -- Update UI scale cache every 1 second
+
+-- OPTIMIZATION: Reduce default refresh check - only check keys when needed
+local lastKeyCheckTime = 0
+local KEY_CHECK_INTERVAL = 0.1 -- Check keys 10 times per second max
+
 sAEvent:SetScript("OnUpdate", function()
 
 	local time = GetTime()
 	local refreshRate = 1 / (simpleAuras.refresh or 5)
 	if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
-		
-  -- Cache the UI scale in a safe context
-  sA.uiScale = UIParent:GetEffectiveScale()
-
-  -- Handle Move Mode with Ctrl Key
-  local mainFrame = _G["sAGUI"]
-  if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() and IsAltKeyDown() and IsShiftKeyDown() then
-
-	if sA.moveAuras ~= 1 then
-			
-		-- TestAura
-		if sA.TestAura and sA.TestAura:IsVisible() then
-			
-			sA.draggers[0]:Show()
-			gui:SetAlpha(0)
-			gui.editor:SetAlpha(0)
-			
-		else
-	  
-			-- Continuously show draggers for any visible frames while in move mode
-			for id, frame in pairs(sA.frames) do
-			  if frame:IsVisible() and sA.draggers[id] then
-				sA.draggers[id]:Show()
-				gui:SetAlpha(0)
-				if gui.editor then
-				  gui.editor:SetAlpha(0)
-				end
-			  end
-			end
-			
-		end
-
-		sA.moveAuras = 1
-
-	end
 	
-  else
-
-	if sA.moveAuras == 1 then
-				
-		-- Hide all draggers when not in move mode
-	    for id, dragger in pairs(sA.draggers) do
-	      if dragger then
-			dragger:Hide()
-	        gui:SetAlpha(1)
-			if gui.editor then
-	          gui.editor:SetAlpha(1)
-			end
-		  end
-	    end
-		
-		-- Reload data if in editor
-		if gui.editor and gui.auraEdit and sA.draggers[0] and sA.draggers[0]:IsVisible() then
-			
-			sA:SaveAura(gui.auraEdit)
-			
-		end
-
-		sA.moveAuras = 0
-
-	end
-	
+  -- OPTIMIZATION: Cache the UI scale less frequently
+  if (time - cacheScaleTime) >= SCALE_CACHE_INTERVAL then
+    cachedUIScale = UIParent:GetEffectiveScale()
+    sA.uiScale = cachedUIScale
+    cacheScaleTime = time
   end
+
+  -- OPTIMIZATION: Only check keys periodically, not every frame
+  if (time - lastKeyCheckTime) >= KEY_CHECK_INTERVAL then
+    lastKeyCheckTime = time
+    
+    -- Handle Move Mode with Ctrl Key
+    local mainFrame = _G["sAGUI"]
+    if mainFrame and mainFrame:IsVisible() and IsControlKeyDown() and IsAltKeyDown() and IsShiftKeyDown() then
+
+  	if sA.moveAuras ~= 1 then
+  			
+  		-- TestAura
+  		if sA.TestAura and sA.TestAura:IsVisible() then
+  			
+  			sA.draggers[0]:Show()
+  			gui:SetAlpha(0)
+  			gui.editor:SetAlpha(0)
+  			
+  		else
+  	  
+  			-- Continuously show draggers for any visible frames while in move mode
+  			for id, frame in pairs(sA.frames) do
+  			  if frame:IsVisible() and sA.draggers[id] then
+  				sA.draggers[id]:Show()
+  				gui:SetAlpha(0)
+  				if gui.editor then
+  				  gui.editor:SetAlpha(0)
+  				end
+  			  end
+  			end
+  			
+  		end
+
+  		sA.moveAuras = 1
+
+  	end
+  	
+    else
+
+  	if sA.moveAuras == 1 then
+  				
+  		-- Hide all draggers when not in move mode
+  	    for id, dragger in pairs(sA.draggers) do
+  	      if dragger then
+  			dragger:Hide()
+  	        gui:SetAlpha(1)
+  			if gui.editor then
+  	          gui.editor:SetAlpha(1)
+  			end
+  		  end
+  	    end
+  		
+  		-- Reload data if in editor
+  		if gui.editor and gui.auraEdit and sA.draggers[0] and sA.draggers[0]:IsVisible() then
+  			
+  			sA:SaveAura(gui.auraEdit)
+  			
+  		end
+
+  		sA.moveAuras = 0
+
+  	end
+  	
+    end
+  end -- End key check throttling
 		
   sAEvent.lastUpdate = time
   sA:UpdateAuras()
@@ -454,5 +473,4 @@ SlashCmdList["sA"] = function(msg)
 	end
 
 end
-
 
