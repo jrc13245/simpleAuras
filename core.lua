@@ -14,31 +14,9 @@ local sAParent = CreateFrame("Frame", "sAParentFrame", UIParent)
 sAParent:SetFrameStrata("BACKGROUND")
 sAParent:SetAllPoints(UIParent)
 
--- OPTIMIZATION: Cache combat/raid/party status to avoid redundant API calls
-local cachedCombatStatus = {
-  inCombat = false,
-  inRaid = false,
-  inParty = false,
-  hasTarget = false,
-  lastUpdate = 0
-}
-local STATUS_CACHE_INTERVAL = 0.2 -- Update status cache 5 times per second
-
-local function UpdateCombatStatus()
-  local now = GetTime()
-  if (now - cachedCombatStatus.lastUpdate) < STATUS_CACHE_INTERVAL then
-    return cachedCombatStatus.inCombat, cachedCombatStatus.inRaid, cachedCombatStatus.inParty, cachedCombatStatus.hasTarget
-  end
-  
-  cachedCombatStatus.inCombat = UnitAffectingCombat("player")
-  cachedCombatStatus.inRaid = UnitInRaid("player")
-  cachedCombatStatus.inParty = GetNumPartyMembers() > 0 and not cachedCombatStatus.inRaid
-  cachedCombatStatus.hasTarget = UnitExists("target")
-  cachedCombatStatus.lastUpdate = now
-  
-  return cachedCombatStatus.inCombat, cachedCombatStatus.inRaid, cachedCombatStatus.inParty, cachedCombatStatus.hasTarget
-end
-
+---------------------------------------------------
+-- Aura Condition Evaluation (uses cached state)
+---------------------------------------------------
 function sA:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
   -- This check is now more robust and will correctly filter out new, empty auras.
   if not aura or not aura.name or aura.name == "" then return false end
@@ -88,11 +66,10 @@ function sA:ShouldAuraBeActive(aura, inCombat, inRaid, inParty)
 end
 
 -------------------------------------------------
--- Cooldown info by spell name
+-- Cooldown info by spell name with caching
 -------------------------------------------------
--- OPTIMIZATION: Cache cooldown lookups
 local cooldownCache = {}
-local COOLDOWN_CACHE_TIME = 0.5 -- Cache cooldown info for 0.5 seconds
+local COOLDOWN_CACHE_TIME = 0.5
 
 function sA:GetCooldownInfo(spellName)
   local now = GetTime()
@@ -372,9 +349,8 @@ local function CreateDualFrame(id)
 end
 
 -------------------------------------------------
--- Update aura display
+-- Update aura display (uses event-driven state)
 -------------------------------------------------
--- OPTIMIZATION: Skip disabled auras early
 local function IsAuraActive(aura)
   return aura and aura.name and aura.name ~= "" and (aura.enabled == nil or aura.enabled == 1)
 end
@@ -390,8 +366,13 @@ function sA:UpdateAuras()
     if gui and gui.editor then gui.editor:Hide(); gui.editor = nil end
   end
 
-  -- OPTIMIZATION: Get the current player status once per cycle using cached version
-  local inCombat, inRaid, inParty, hasTarget = UpdateCombatStatus()
+  -- EVENT-DRIVEN: Use cached game state from events (no polling)
+  -- State is updated by events: PLAYER_REGEN_*, RAID_ROSTER_UPDATE, 
+  -- PARTY_MEMBERS_CHANGED, PLAYER_TARGET_CHANGED
+  local inCombat = sA.gameState.inCombat
+  local inRaid = sA.gameState.inRaid
+  local inParty = sA.gameState.inParty
+  local hasTarget = sA.gameState.hasTarget
 
   for id, aura in ipairs(simpleAuras.auras) do
     -- OPTIMIZATION: Quick check to skip disabled auras entirely

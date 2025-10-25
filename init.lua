@@ -200,17 +200,73 @@ if sA.SuperWoW then
   end)
 end
 
--- Timed updates
+---------------------------------------------------
+-- Event-Driven State Tracking
+---------------------------------------------------
+-- Track combat/raid/party/target state changes with events instead of polling
+
+sA.gameState = {
+  inCombat = false,
+  inRaid = false,
+  inParty = false,
+  hasTarget = false,
+  needsUpdate = true  -- Flag to trigger update on state change
+}
+
+local sAStateTracker = CreateFrame("Frame")
+sAStateTracker:RegisterEvent("PLAYER_REGEN_DISABLED")
+sAStateTracker:RegisterEvent("PLAYER_REGEN_ENABLED")
+sAStateTracker:RegisterEvent("RAID_ROSTER_UPDATE")
+sAStateTracker:RegisterEvent("PARTY_MEMBERS_CHANGED")
+sAStateTracker:RegisterEvent("PLAYER_TARGET_CHANGED")
+sAStateTracker:SetScript("OnEvent", function()
+  if event == "PLAYER_REGEN_DISABLED" then
+    sA.gameState.inCombat = true
+    sA.gameState.needsUpdate = true
+    sAinCombat = true
+  elseif event == "PLAYER_REGEN_ENABLED" then
+    sA.gameState.inCombat = false
+    sA.gameState.needsUpdate = true
+    sAinCombat = nil
+  elseif event == "RAID_ROSTER_UPDATE" then
+    local wasInRaid = sA.gameState.inRaid
+    sA.gameState.inRaid = UnitInRaid("player")
+    if wasInRaid ~= sA.gameState.inRaid then
+      sA.gameState.needsUpdate = true
+    end
+  elseif event == "PARTY_MEMBERS_CHANGED" then
+    local wasInParty = sA.gameState.inParty
+    sA.gameState.inParty = GetNumPartyMembers() > 0 and not sA.gameState.inRaid
+    if wasInParty ~= sA.gameState.inParty then
+      sA.gameState.needsUpdate = true
+    end
+  elseif event == "PLAYER_TARGET_CHANGED" then
+    local hadTarget = sA.gameState.hasTarget
+    sA.gameState.hasTarget = UnitExists("target")
+    if hadTarget ~= sA.gameState.hasTarget then
+      sA.gameState.needsUpdate = true
+    end
+  end
+end)
+
+---------------------------------------------------
+-- Throttled OnUpdate (only for what we can't event-ize)
+---------------------------------------------------
+-- This still needs OnUpdate for:
+-- 1. Duration countdowns
+-- 2. Move mode detection (key states)
+-- 3. Buff/debuff scanning (no events for buff changes)
+
 local sAEvent = CreateFrame("Frame", "sAEvent", UIParent)
 
--- OPTIMIZATION: Cache frequently accessed values to reduce lookups
+-- Cache UI scale
 local cachedUIScale = 1
 local cacheScaleTime = 0
-local SCALE_CACHE_INTERVAL = 1 -- Update UI scale cache every 1 second
+local SCALE_CACHE_INTERVAL = 1
 
--- OPTIMIZATION: Reduce default refresh check - only check keys when needed
+-- Key check throttling
 local lastKeyCheckTime = 0
-local KEY_CHECK_INTERVAL = 0.1 -- Check keys 10 times per second max
+local KEY_CHECK_INTERVAL = 0.1
 
 sAEvent:SetScript("OnUpdate", function()
 
@@ -218,14 +274,14 @@ sAEvent:SetScript("OnUpdate", function()
 	local refreshRate = 1 / (simpleAuras.refresh or 5)
 	if (time - (sAEvent.lastUpdate or 0)) < refreshRate then return end
 	
-  -- OPTIMIZATION: Cache the UI scale less frequently
+  -- Cache the UI scale less frequently
   if (time - cacheScaleTime) >= SCALE_CACHE_INTERVAL then
     cachedUIScale = UIParent:GetEffectiveScale()
     sA.uiScale = cachedUIScale
     cacheScaleTime = time
   end
 
-  -- OPTIMIZATION: Only check keys periodically, not every frame
+  -- Only check keys periodically for move mode
   if (time - lastKeyCheckTime) >= KEY_CHECK_INTERVAL then
     lastKeyCheckTime = time
     
@@ -288,23 +344,14 @@ sAEvent:SetScript("OnUpdate", function()
   	end
   	
     end
-  end -- End key check throttling
+  end
 		
   sAEvent.lastUpdate = time
+  
+  -- Call UpdateAuras - this still needs to run on a timer for duration countdowns
+  -- and buff/debuff scanning (since there's no event for those)
   sA:UpdateAuras()
 		
-end)
-
--- Combat state
-local sACombat = CreateFrame("Frame")
-sACombat:RegisterEvent("PLAYER_REGEN_DISABLED")
-sACombat:RegisterEvent("PLAYER_REGEN_ENABLED")
-sACombat:SetScript("OnEvent", function()
-  if event == "PLAYER_REGEN_DISABLED" then
-    sAinCombat = true
-  elseif event == "PLAYER_REGEN_ENABLED" then
-    sAinCombat = nil
-  end
 end)
 
 ---------------------------------------------------
@@ -436,20 +483,6 @@ SlashCmdList["sA"] = function(msg)
 				else
 					sA:Msg("No learned AuraDuration for SpellID " .. val.. ".")
 				end
-				
-				-- local _, playerGUID = UnitExists("player")
-				-- playerGUID = gsub(playerGUID, "^0x", "")
-				-- for spellID, units in pairs(simpleAuras.auradurations) do
-					-- if type(units) == "table" and units[playerGUID] then
-						-- units[playerGUID] = nil
-						-- if next(units) == nil then
-							-- simpleAuras.auradurations[spellID] = nil
-						-- end
-					-- elseif type(units) ~= "table" and simpleAuras.auradurations[spellID] then
-						-- simpleAuras.auradurations[spellID] = nil
-					-- end
-				-- end
-				-- sA:Msg("All learned AuraDurations casted by unitGUID "..unitGUID.." deleted.")
 			else
 				sA:Msg("Usage: /sa forget X - forget AuraDuration of SpellID X (or use 'all' instead to delete all durations).")
 			end
@@ -473,4 +506,3 @@ SlashCmdList["sA"] = function(msg)
 	end
 
 end
-
